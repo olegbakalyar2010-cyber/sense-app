@@ -18,7 +18,6 @@
     <div class="bg-grid"></div>
     <div class="glow-orb orb-1"></div>
     <div class="glow-orb orb-2"></div>
-    <!-- Floating Crystal Diamonds -->
     <div class="crystal-particle c-1"></div>
     <div class="crystal-particle c-2"></div>
     <div class="crystal-particle c-3"></div>
@@ -32,7 +31,6 @@
         <p>Настроим твой личный профиль питания и гидратации для максимальных результатов.</p>
       </div>
 
-      <!-- Step 1: Имя и Пол -->
       <div id="onboard-step-1" class="onboarding-step active">
         <div class="onboard-label">КАК К ТЕБЕ ОБРАЩАТЬСЯ?</div>
         <input type="text" id="onboard-name" class="onboard-input" placeholder="Твое имя" />
@@ -46,7 +44,6 @@
         <button class="btn-onboard-next" onclick="nextOnboardingStep(2)">Далее ›</button>
       </div>
 
-      <!-- Step 2: Параметры тела -->
       <div id="onboard-step-2" class="onboarding-step">
         <div class="onboard-label">ВОЗРАСТ (ЛЕТ)</div>
         <input type="number" id="onboard-age" class="onboard-input" placeholder="25" value="25" />
@@ -60,7 +57,6 @@
         <button class="btn-onboard-next" onclick="nextOnboardingStep(3)">Далее ›</button>
       </div>
 
-      <!-- Step 3: Цель и Активность -->
       <div id="onboard-step-3" class="onboarding-step">
         <div class="onboard-label">ТВОЯ ГЛАВНАЯ ЦЕЛЬ</div>
         <div class="option-selector-grid-3">
@@ -110,7 +106,6 @@
       </div>
     </header>
 
-    <!-- Main Content Screens -->
     <main id="main-content" class="main-content">
       
       <!-- TAB 1: СЕГОДНЯ (DASHBOARD) -->
@@ -120,7 +115,7 @@
           <button class="pill-btn" onclick="openOnboardingAgain()">Перерасчет КБЖУ</button>
         </div>
 
-        <!-- Main Summary Grid -->
+        <!-- Summary Grid -->
         <div class="summary-card-container">
           <div class="summary-card-header">СВОДКА ДНЯ & КБЖУ</div>
           
@@ -162,6 +157,49 @@
           </div>
         </div>
 
+        <!-- Sleep Tracker Card -->
+        <div class="sleep-tracker-card">
+          <div class="sleep-header">
+            <span class="card-section-title">🌙 ТРЕКЕР СНА & ВОССТАНОВЛЕНИЯ</span>
+            <span id="sleep-duration-badge" style="font-size: 12px; font-weight: 800; color: var(--purple-main);">7.5 ч</span>
+          </div>
+
+          <div class="sleep-grid-inputs">
+            <div class="sleep-input-box">
+              <label>Отход ко сну</label>
+              <input type="time" id="sleep-bedtime" class="sleep-time-input" value="23:00" onchange="updateSleepAnalysis()" />
+            </div>
+            <div class="sleep-input-box">
+              <label>Время подъема</label>
+              <input type="time" id="sleep-waketime" class="sleep-time-input" value="06:30" onchange="updateSleepAnalysis()" />
+            </div>
+          </div>
+
+          <div class="sleep-quality-selector">
+            <div class="sleep-quality-label">
+              <span>Качество сна (1-10)</span>
+              <span id="quality-rating-val" style="color: var(--purple-main); font-weight: 800;">8/10</span>
+            </div>
+            <div class="rating-chips-scroll">
+              <div class="rating-chip" onclick="selectSleepRating(1)">1</div>
+              <div class="rating-chip" onclick="selectSleepRating(2)">2</div>
+              <div class="rating-chip" onclick="selectSleepRating(3)">3</div>
+              <div class="rating-chip" onclick="selectSleepRating(4)">4</div>
+              <div class="rating-chip" onclick="selectSleepRating(5)">5</div>
+              <div class="rating-chip" onclick="selectSleepRating(6)">6</div>
+              <div class="rating-chip" onclick="selectSleepRating(7)">7</div>
+              <div class="rating-chip selected" onclick="selectSleepRating(8)">8</div>
+              <div class="rating-chip" onclick="selectSleepRating(9)">9</div>
+              <div class="rating-chip" onclick="selectSleepRating(10)">10</div>
+            </div>
+          </div>
+
+          <div class="sleep-advice-box">
+            <div class="advice-title">💡 Совет по улучшению сна:</div>
+            <div id="sleep-advice-text">Отличная продолжительность! Старайтесь за 1 час до сна отключать экраны телефонов для максимальной вырабатываемости мелатонина.</div>
+          </div>
+        </div>
+
         <!-- Water Vessel Card -->
         <div class="water-wave-container">
           <div class="card-section-title">ИНТЕРАКТИВНЫЙ БАЛАНС ВОДЫ</div>
@@ -180,7 +218,7 @@
         </div>
       </section>
 
-      <!-- TAB 2: ПИТАНИЕ (NUTRITION & WATER) -->
+      <!-- TAB 2: ПИТАНИЕ -->
       <section id="tab-nutrition" class="tab-screen">
         <div class="section-heading">
           <h2>Питание & КБЖУ</h2>
@@ -285,21 +323,21 @@
         </div>
       </section>
 
-      <!-- TAB 4: PATH (HABITS) -->
+      <!-- TAB 4: PATH (HABITS & SELF CARE) -->
       <section id="tab-path" class="tab-screen">
         <div class="section-heading">
-          <h2>Путь & Ритуалы</h2>
-          <p>Ваша дисциплина и ежедневный прогресс.</p>
+          <h2>Привычки & Уход за собой</h2>
+          <p>Ежедневные ритуалы, здоровье и дисциплина.</p>
         </div>
 
         <div class="glass-card">
           <div class="glass-card-top-bar">
             <span class="card-section-title">ЕЖЕДНЕВНЫЕ РИТУАЛЫ</span>
-            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Новая привычка</button>
+            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Свой ритуал</button>
           </div>
 
           <div id="habits-list-container" class="habits-list">
-            <!-- Dynamically populated -->
+            <!-- Dynamically populated habits -->
           </div>
         </div>
       </section>

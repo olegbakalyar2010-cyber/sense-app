@@ -24,7 +24,7 @@ const DEFAULT_STATE = {
     age: 25,
     height: 178,
     weight: 75,
-    goal: 'loss', // 'loss', 'maintain', 'gain'
+    goal: 'loss',
     activity: 1.2
   },
   calculatedTargets: {
@@ -36,6 +36,11 @@ const DEFAULT_STATE = {
     fib: 30
   },
   waterCurrent: 0.0,
+  sleepData: {
+    bedtime: '23:00',
+    waketime: '06:30',
+    quality: 8
+  },
   streak: 1,
   meals: {
     'Завтрак': [],
@@ -46,9 +51,11 @@ const DEFAULT_STATE = {
     { id: 1, tag: '💡 Идея', content: 'Дисциплина — это выбор между тем, чего ты хочешь прямо сейчас, и тем, чего ты хочешь больше всего.', date: '28 Июля', mood: '⚡' }
   ],
   habits: [
-    { id: 1, title: 'Утренняя разминка (10 мин)', completed: false, streak: 4 },
-    { id: 2, title: 'Выпить норму воды', completed: false, streak: 6 },
-    { id: 3, title: 'Записать мысль в дневник SENSE', completed: false, streak: 2 }
+    { id: 1, icon: '💧', title: 'Питьевой режим (Норма воды)', completed: false, streak: 6 },
+    { id: 2, icon: '🏃‍♂️', title: 'Спорт / Физ. активность (30+ мин)', completed: false, streak: 4 },
+    { id: 3, icon: '🧴', title: 'Уход за собой и кожей (Self-Care)', completed: false, streak: 3 },
+    { id: 4, icon: '📖', title: 'Чтение полезной книги (20+ мин)', completed: false, streak: 5 },
+    { id: 5, icon: '🤲', title: 'Чтение молитв / Духовный ритуал', completed: false, streak: 7 }
   ]
 };
 
@@ -92,16 +99,13 @@ function initTelegramUser() {
   }
 }
 
-// 🧮 Health Target Calculator
+// Health Target Calculator
 function calculateHealthTargets(profile) {
   const { gender, age, height, weight, goal, activity } = profile;
 
   let bmr = (10 * weight) + (6.25 * height) - (5 * age);
-  if (gender === 'male') {
-    bmr += 5;
-  } else {
-    bmr -= 161;
-  }
+  if (gender === 'male') bmr += 5;
+  else bmr -= 161;
 
   let tdee = bmr * activity;
   let calories = Math.round(tdee);
@@ -111,14 +115,13 @@ function calculateHealthTargets(profile) {
   if (goal === 'loss') {
     calories = Math.round(tdee * 0.85); // 15% Deficit
   } else if (goal === 'gain') {
-    calories = Math.round(tdee * 1.15); // 15% Surplus for Muscle Mass
-    p = Math.round(weight * 2.2);       // High protein for hypertrophy
+    calories = Math.round(tdee * 1.15); // 15% Surplus
+    p = Math.round(weight * 2.2);
     f = Math.round(weight * 1.0);
   }
 
   const remainingCalories = calories - (p * 4) - (f * 9);
   const c = Math.max(50, Math.round(remainingCalories / 4));
-
   const waterGoal = Number((weight * 0.035).toFixed(1));
 
   return { calories, waterGoal, p, f, c, fib: 30 };
@@ -215,6 +218,7 @@ function renderAll() {
   renderTodaySummary();
   renderNutrition();
   renderWaterVessel();
+  renderSleepTracker();
   renderJournal();
   renderHabits();
 }
@@ -240,6 +244,7 @@ function getLoggedMacros() {
   return { p, f, c, fib };
 }
 
+// 1. TODAY DASHBOARD
 function renderTodaySummary() {
   const targets = appState.calculatedTargets;
   const loggedCal = getLoggedCalories();
@@ -265,6 +270,78 @@ function renderTodaySummary() {
   }
 }
 
+// 2. SLEEP TRACKER & AI ADVICE
+function calculateSleepHours(bedtime, waketime) {
+  const [bH, bM] = bedtime.split(':').map(Number);
+  const [wH, wM] = waketime.split(':').map(Number);
+
+  let bDate = new Date(2000, 0, 1, bH, bM);
+  let wDate = new Date(2000, 0, 1, wH, wM);
+
+  if (wDate <= bDate) {
+    wDate.setDate(wDate.getDate() + 1);
+  }
+
+  const diffMs = wDate - bDate;
+  return Number((diffMs / (1000 * 60 * 60)).toFixed(1));
+}
+
+function renderSleepTracker() {
+  if (!appState.sleepData) {
+    appState.sleepData = { bedtime: '23:00', waketime: '06:30', quality: 8 };
+  }
+
+  const { bedtime, waketime, quality } = appState.sleepData;
+
+  const bedtimeInput = document.getElementById('sleep-bedtime');
+  const waketimeInput = document.getElementById('sleep-waketime');
+  if (bedtimeInput) bedtimeInput.value = bedtime;
+  if (waketimeInput) waketimeInput.value = waketime;
+
+  const hours = calculateSleepHours(bedtime, waketime);
+  const badge = document.getElementById('sleep-duration-badge');
+  if (badge) badge.textContent = `${hours} ч`;
+
+  const ratingVal = document.getElementById('quality-rating-val');
+  if (ratingVal) ratingVal.textContent = `${quality}/10`;
+
+  // Highlight rating chip
+  document.querySelectorAll('.rating-chip').forEach(chip => {
+    chip.classList.toggle('selected', Number(chip.textContent) === quality);
+  });
+
+  // Advice generation
+  const adviceText = document.getElementById('sleep-advice-text');
+  if (adviceText) {
+    let advice = 'Идеальная норма сна! Старайтесь проветривать спальню перед сном и засыпать в полной темноте.';
+    if (hours < 7) {
+      advice = '⚠️ Недостаток сна (меньше 7 часов). Восстановление организма замедленно. Попробуйте сегодня лечь на 45 минут раньше и не пить кофеин после 16:00.';
+    } else if (quality <= 5) {
+      advice = '⚠️ Низкое качество сна. Отключите экраны смартфонов за 1 час до сна и попробуйте прохладный душ или короткую медитацию.';
+    } else if (quality >= 9 && hours >= 7.5) {
+      advice = '🌟 Превосходный глубокий сон! Ваш организм полностью восстановился и готов к высокой физической и умственной активности.';
+    }
+    adviceText.textContent = advice;
+  }
+}
+
+function updateSleepAnalysis() {
+  const bedtime = document.getElementById('sleep-bedtime').value;
+  const waketime = document.getElementById('sleep-waketime').value;
+  appState.sleepData.bedtime = bedtime;
+  appState.sleepData.waketime = waketime;
+  triggerHaptic('light');
+  saveState();
+}
+
+function selectSleepRating(rating) {
+  if (!appState.sleepData) appState.sleepData = {};
+  appState.sleepData.quality = rating;
+  triggerHaptic('medium');
+  saveState();
+}
+
+// 3. WATER VESSEL
 function renderWaterVessel() {
   const goal = appState.calculatedTargets.waterGoal || 2.6;
   const current = appState.waterCurrent || 0;
@@ -292,6 +369,7 @@ function resetNutritionToday() {
   saveState();
 }
 
+// 4. NUTRITION SCREEN
 function renderNutrition() {
   const targets = appState.calculatedTargets;
   const loggedCal = getLoggedCalories();
@@ -351,6 +429,7 @@ function renderNutrition() {
   renderMealSection('Ужин', 'meal-items-dinner');
 }
 
+// 5. JOURNAL
 function renderJournal() {
   const container = document.getElementById('journal-feed-container');
   if (!container) return;
@@ -399,18 +478,20 @@ function saveJournalFromModal() {
   }
 }
 
+// 6. HABITS & SELF-CARE RITUALS
 function renderHabits() {
   const container = document.getElementById('habits-list-container');
   if (!container) return;
 
   if (appState.habits.length === 0) {
-    container.innerHTML = `<div class="empty-box">Нет привычек. Нажмите "+ Новая привычка".</div>`;
+    container.innerHTML = `<div class="empty-box">Нет ритуалов. Нажмите "+ Свой ритуал".</div>`;
     return;
   }
 
   container.innerHTML = appState.habits.map(habit => `
     <div class="habit-card-item ${habit.completed ? 'completed' : ''}" onclick="toggleHabit(${habit.id})">
       <div class="habit-left">
+        <span class="habit-icon-emoji">${habit.icon || '✨'}</span>
         <div class="habit-checkbox">${habit.completed ? '✓' : ''}</div>
         <div class="habit-title">${habit.title}</div>
       </div>
@@ -431,9 +512,9 @@ function toggleHabit(id) {
 }
 
 function openAddHabitModal() {
-  document.getElementById('modal-title').textContent = 'Новая привычка';
+  document.getElementById('modal-title').textContent = 'Новый ритуал';
   document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название (напр., Чтение 20 мин)" />
+    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название ритуала (напр., Медитация)" />
     <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать</button>
   `;
   document.getElementById('app-modal').classList.add('active');
@@ -442,7 +523,7 @@ function openAddHabitModal() {
 function saveHabitFromModal() {
   const title = document.getElementById('habit-input-title').value.trim();
   if (title) {
-    appState.habits.push({ id: Date.now(), title, completed: false, streak: 1 });
+    appState.habits.push({ id: Date.now(), icon: '✨', title, completed: false, streak: 1 });
     triggerHaptic('success');
     saveState();
     closeModal();
