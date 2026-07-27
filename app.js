@@ -28,11 +28,11 @@ const DEFAULT_STATE = {
     activity: 1.2
   },
   calculatedTargets: {
-    calories: 2100,
+    calories: 2255,
     waterGoal: 2.6,
     p: 150,
-    f: 75,
-    c: 200,
+    f: 67,
+    c: 230,
     fib: 30
   },
   waterCurrent: 0.0,
@@ -246,7 +246,7 @@ function getLoggedMacros() {
 
 // 1. TODAY DASHBOARD
 function renderTodaySummary() {
-  const targets = appState.calculatedTargets;
+  const targets = appState.calculatedTargets || { calories: 2255, waterGoal: 2.6 };
   const loggedCal = getLoggedCalories();
 
   const kbjuPercent = Math.min(100, Math.round((loggedCal / targets.calories) * 100));
@@ -270,7 +270,7 @@ function renderTodaySummary() {
   }
 }
 
-// 2. SLEEP TRACKER & AI ADVICE
+// 2. SLEEP TRACKER
 function calculateSleepHours(bedtime, waketime) {
   const [bH, bM] = bedtime.split(':').map(Number);
   const [wH, wM] = waketime.split(':').map(Number);
@@ -305,12 +305,10 @@ function renderSleepTracker() {
   const ratingVal = document.getElementById('quality-rating-val');
   if (ratingVal) ratingVal.textContent = `${quality}/10`;
 
-  // Highlight rating chip
   document.querySelectorAll('.rating-chip').forEach(chip => {
     chip.classList.toggle('selected', Number(chip.textContent) === quality);
   });
 
-  // Advice generation
   const adviceText = document.getElementById('sleep-advice-text');
   if (adviceText) {
     let advice = 'Идеальная норма сна! Старайтесь проветривать спальню перед сном и засыпать в полной темноте.';
@@ -369,13 +367,13 @@ function resetNutritionToday() {
   saveState();
 }
 
-// 4. NUTRITION SCREEN
+// 4. NUTRITION SCREEN (WITH EXPLICIT TARGET GRAMS & CALORIES DISPLAY)
 function renderNutrition() {
-  const targets = appState.calculatedTargets;
+  const targets = appState.calculatedTargets || { calories: 2255, p: 150, f: 67, c: 230, fib: 30 };
   const loggedCal = getLoggedCalories();
 
   document.getElementById('calories-logged-val').textContent = loggedCal;
-  document.getElementById('calories-goal-val').textContent = `из ${targets.calories}`;
+  document.getElementById('calories-goal-val').textContent = `из ${targets.calories} ккал`;
 
   const calBar = document.getElementById('calorie-ring-bar');
   if (calBar) {
@@ -388,14 +386,15 @@ function renderNutrition() {
     let goalLabel = '🔥 Похудение';
     if (appState.userProfile.goal === 'maintain') goalLabel = '⚖️ Баланс';
     if (appState.userProfile.goal === 'gain') goalLabel = '🏋️‍♂️ Набор массы';
-    userGoalText.textContent = `Цель: ${goalLabel} (${appState.userProfile.weight} кг)`;
+    userGoalText.textContent = `Цель: ${goalLabel} (${appState.userProfile.weight} кг • ${targets.calories} ккал/день)`;
   }
 
   const macros = getLoggedMacros();
-  const updateMacro = (type, val, goal) => {
-    const pct = Math.min(100, Math.round((val / goal) * 100));
+  const updateMacro = (type, val, targetVal) => {
+    const pct = Math.min(100, Math.round((val / targetVal) * 100));
     document.getElementById(`macro-${type}-percent`).textContent = `${pct}%`;
-    document.getElementById(`macro-${type}-gram`).textContent = `${val}г`;
+    // Explicitly show logged vs target grams (e.g. 0 / 150г)
+    document.getElementById(`macro-${type}-gram`).textContent = `${val} / ${targetVal}г`;
     document.getElementById(`macro-${type}-bar`).style.width = `${pct}%`;
   };
 
@@ -478,7 +477,7 @@ function saveJournalFromModal() {
   }
 }
 
-// 6. HABITS & SELF-CARE RITUALS
+// 6. HABITS & SELF-CARE RITUALS (CHECKLIST)
 function renderHabits() {
   const container = document.getElementById('habits-list-container');
   if (!container) return;
@@ -514,7 +513,7 @@ function toggleHabit(id) {
 function openAddHabitModal() {
   document.getElementById('modal-title').textContent = 'Новый ритуал';
   document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название ритуала (напр., Медитация)" />
+    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название ритуала (напр., Чтение молитвы / Скинкеэр)" />
     <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать</button>
   `;
   document.getElementById('app-modal').classList.add('active');

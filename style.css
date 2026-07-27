@@ -700,6 +700,20 @@ body {
 .completed .habit-title { text-decoration: line-through; color: var(--text-muted); }
 .habit-streak-badge { font-size: 11px; color: var(--yellow-main); font-weight: 700; }
 
+/* KBJU Explicit Target Display Box */
+.macro-target-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.macro-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-glass);
+}
+
 /* Onboarding Wizard */
 .onboarding-backdrop {
   position: fixed;
