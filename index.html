@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SENSE 2.0 — Aqua Crystal Life OS</title>
+  <title>PROTOCOL — Life OS</title>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Fonts -->
@@ -13,7 +13,7 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-aqua">
+<body class="theme-emerald">
   <div class="app-background">
     <div class="bg-grid"></div>
     <div class="glow-orb orb-1"></div>
@@ -23,101 +23,55 @@
     <div class="crystal-particle c-3"></div>
   </div>
 
-  <!-- Onboarding Wizard Modal -->
-  <div id="onboarding-modal" class="onboarding-backdrop" style="display: none;">
-    <div class="onboarding-card">
-      <div class="onboarding-header">
-        <h2>Привет! Я SENSE 💎</h2>
-        <p>Настроим твой личный профиль питания и гидратации для максимальных результатов.</p>
-      </div>
-
-      <div id="onboard-step-1" class="onboarding-step active">
-        <div class="onboard-label">КАК К ТЕБЕ ОБРАЩАТЬСЯ?</div>
-        <input type="text" id="onboard-name" class="onboard-input" placeholder="Твое имя" />
-
-        <div class="onboard-label">ТВОЙ ПОЛ</div>
-        <div class="option-selector-grid">
-          <div class="option-card-btn selected" id="gender-male" onclick="selectGender('male')">👨 Мужчина</div>
-          <div class="option-card-btn" id="gender-female" onclick="selectGender('female')">👩 Женщина</div>
-        </div>
-
-        <button class="btn-onboard-next" onclick="nextOnboardingStep(2)">Далее ›</button>
-      </div>
-
-      <div id="onboard-step-2" class="onboarding-step">
-        <div class="onboard-label">ВОЗРАСТ (ЛЕТ)</div>
-        <input type="number" id="onboard-age" class="onboard-input" placeholder="25" value="25" />
-
-        <div class="onboard-label">РОСТ (СМ)</div>
-        <input type="number" id="onboard-height" class="onboard-input" placeholder="178" value="178" />
-
-        <div class="onboard-label">ТЕКУЩИЙ ВЕС (КГ)</div>
-        <input type="number" id="onboard-weight" class="onboard-input" placeholder="75" value="75" />
-
-        <button class="btn-onboard-next" onclick="nextOnboardingStep(3)">Далее ›</button>
-      </div>
-
-      <div id="onboard-step-3" class="onboarding-step">
-        <div class="onboard-label">ТВОЯ ГЛАВНАЯ ЦЕЛЬ</div>
-        <div class="option-selector-grid-3">
-          <div class="option-card-btn selected" id="goal-weightloss" onclick="selectGoal('loss')">🔥 Похудение</div>
-          <div class="option-card-btn" id="goal-maintain" onclick="selectGoal('maintain')">⚖️ Баланс</div>
-          <div class="option-card-btn" id="goal-gain" onclick="selectGoal('gain')">🏋️‍♂️ Масса</div>
-        </div>
-
-        <div class="onboard-label">УРОВЕНЬ АКТИВНОСТИ</div>
-        <div class="option-selector-grid">
-          <div class="option-card-btn selected" id="act-low" onclick="selectActivity(1.2)">🛋️ Малоподвижный</div>
-          <div class="option-card-btn" id="act-mid" onclick="selectActivity(1.45)">🏃‍♂️ Умеренный</div>
-        </div>
-
-        <button class="btn-onboard-next" onclick="finishOnboarding()">Рассчитать мой план 🚀</button>
-      </div>
-    </div>
-  </div>
-
   <div id="app-container" class="app-container">
     <!-- Header -->
     <header class="header">
       <div class="header-brand">
         <span class="brand-status-dot"></span>
-        <h1 class="brand-title">SENSE</h1>
+        <h1 class="brand-title">PROTOCOL</h1>
         <span id="current-date-badge" class="date-badge">Вт, 28 Июля</span>
       </div>
 
       <div class="header-stats">
-        <button id="btn-quick-notes" class="icon-chip" title="Дневник мыслей" onclick="switchTab('journal')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 20h9"></path>
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        <button class="icon-chip" title="Заметки" onclick="openAddNoteModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </button>
+
+        <button class="icon-chip" title="Идеи" onclick="openAddIdeaModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18h6"></path><path d="M10 22h4"></path>
+            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.62 2.95 1.63 3.99.64.67 1.11 1.42 1.37 2.41"></path>
           </svg>
         </button>
 
         <div class="streak-chip">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 23c-4.97 0-9-3.58-9-8 0-4.08 3.05-7.5 6.94-9.33.39-.18.84.14.79.57-.14 1.25.1 2.53.72 3.65.26.47.93.39 1.07-.13A13.23 13.23 0 0 1 14.2 4.4c.17-.46.74-.63 1.13-.33C18.66 6.64 21 10.5 21 15c0 4.42-4.03 8-9 8z"/>
-          </svg>
+          <span>🔥</span>
           <span id="streak-count">1</span>
         </div>
 
-        <div id="user-avatar" class="user-avatar-chip" onclick="openOnboardingAgain()">
-          <span id="user-avatar-char">S</span>
+        <div id="user-avatar" class="user-avatar-chip" onclick="switchTab('settings')">
+          <span id="user-avatar-char">P</span>
         </div>
       </div>
     </header>
 
     <main id="main-content" class="main-content">
       
-      <!-- TAB 1: СЕГОДНЯ -->
+      <!-- TAB 1: СЕГОДНЯ (PROTOCOL HOMEPAGE) -->
       <section id="tab-today" class="tab-screen active">
         <div class="sub-nav-pills">
-          <button class="pill-btn active" data-subtab="today">Обзор Главной</button>
-          <button class="pill-btn" onclick="openOnboardingAgain()">⚙️ Перерасчет КБЖУ</button>
+          <button class="pill-btn active" data-subtab="today" onclick="switchSubTab('today')">Сегодня</button>
+          <button class="pill-btn" data-subtab="history" onclick="switchSubTab('history')">История</button>
+          <button class="pill-btn highlight" onclick="closeTodaySummary()">Закрыть день</button>
+          <button class="pill-btn icon-only" title="AI Sparkles" onclick="triggerAISparkle()">✨ AI</button>
         </div>
 
-        <!-- 1. Overall Progress Ring -->
+        <!-- Quad Grid Summary Card (Exact Protocol Layout) -->
         <div class="summary-card-container">
-          <div class="summary-card-header">СВОДКА УСПЕХА ЗА ДЕНЬ</div>
+          <div class="summary-card-header">СВОДКА</div>
           <div class="summary-grid">
             <div class="center-progress-badge">
               <svg class="ring-svg" viewBox="0 0 100 100">
@@ -126,86 +80,77 @@
               </svg>
               <div class="ring-content">
                 <span id="overall-percentage" class="ring-val">0%</span>
-                <span class="ring-label">УСПЕХ</span>
+                <span class="ring-label">СВОДКА</span>
               </div>
             </div>
 
             <div class="summary-card card-tasks" onclick="switchTab('path')">
-              <div class="card-title">РИТУАЛЫ</div>
+              <div class="card-title">ДЕЛА</div>
               <div id="val-tasks-percent" class="card-value">0%</div>
-              <div class="card-footer-link">выполнено</div>
             </div>
 
             <div class="summary-card card-kbju" onclick="switchTab('nutrition')">
               <div class="card-title">КБЖУ</div>
               <div id="val-kbju-percent" class="card-value">0%</div>
-              <div class="card-footer-link">калорий</div>
             </div>
 
-            <div class="summary-card card-workouts" onclick="switchTab('journal')">
-              <div class="card-title">ДНЕВНИК</div>
-              <div id="val-journal-count" class="card-value">0</div>
-              <div class="card-footer-link">записей</div>
+            <div class="summary-card card-workouts" onclick="switchTab('personal')">
+              <div class="card-title">ТРЕНИРОВКИ</div>
+              <div id="val-workouts-percent" class="card-value">0%</div>
             </div>
 
             <div class="summary-card card-water" onclick="switchTab('nutrition')">
               <div class="card-title">ВОДА</div>
               <div id="val-water-percent" class="card-value">0%</div>
-              <div class="card-footer-link">нормы</div>
             </div>
           </div>
         </div>
 
-        <!-- 2. Checklist Card -->
-        <div class="glass-card">
-          <div class="glass-card-top-bar">
-            <span class="card-section-title">☑️ ЧЕК-ЛИСТ РИТУАЛОВ И УХОДА ЗА СОБОЙ</span>
-            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Ритуал</button>
+        <!-- Lower Quick Action Cards (Notes & Sleep) -->
+        <div class="quick-action-cards-grid">
+          <div class="quick-card-item" onclick="switchTab('personal')">
+            <div class="quick-card-title">
+              <span>📝 ЗАМЕТКИ</span>
+              <span id="home-notes-count-badge" class="quick-badge">0</span>
+            </div>
+            <div class="quick-card-sub" id="home-notes-subtitle">Пока пусто</div>
           </div>
-          <div id="today-habits-checklist-container" class="habits-list">
-            <!-- Dynamically populated habits -->
+
+          <div class="quick-card-item" onclick="openSleepModal()">
+            <div class="quick-card-title">
+              <span>🌙 СОН</span>
+              <span id="home-sleep-time-badge" class="quick-badge">23:00</span>
+            </div>
+            <div class="quick-card-sub">Записать прошлую ночь</div>
           </div>
         </div>
+      </section>
 
-        <!-- 3. Dynamic Charts Analytics Container (NEW!) -->
-        <div class="chart-card-box">
-          <div class="chart-header">
-            <span class="card-section-title">📊 ДИНАМИКА И ГРАФИКИ (7 ДНЕЙ)</span>
-            <button class="btn-text-ghost" onclick="logNewWeightModal()">+ Замер веса</button>
-          </div>
-
-          <!-- Weight Chart -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 8px;">⚖️ График Веса (кг)</div>
-            <div id="weight-chart-bars" class="chart-bars-wrapper">
-              <!-- Dynamically populated weight bars -->
-            </div>
-          </div>
-
-          <!-- Water Chart -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 12px; font-weight: 700; color: var(--aqua-primary); margin-bottom: 8px;">💧 График Воды (литры)</div>
-            <div id="water-chart-bars" class="chart-bars-wrapper">
-              <!-- Dynamically populated water bars -->
-            </div>
-          </div>
-
-          <!-- Sleep Chart -->
-          <div>
-            <div style="font-size: 12px; font-weight: 700; color: #d8b4fe; margin-bottom: 8px;">🌙 График Сна (часы)</div>
-            <div id="sleep-chart-bars" class="chart-bars-wrapper">
-              <!-- Dynamically populated sleep bars -->
-            </div>
-          </div>
+      <!-- TAB 2: ПИТАНИЕ (NUTRITION DIARY & WATER) -->
+      <section id="tab-nutrition" class="tab-screen">
+        <div class="section-heading">
+          <h2>Питание</h2>
+          <p>Дневник питания, вода и быстрые добавления.</p>
         </div>
 
-        <!-- 4. Explicit Target KBJU Card -->
+        <!-- Date Strip Bar -->
+        <div class="date-scroll-strip">
+          <div class="date-strip-item">24.07</div>
+          <div class="date-strip-item">25.07</div>
+          <div class="date-strip-item">26.07</div>
+          <div class="date-strip-item">27.07</div>
+          <div class="date-strip-item active">Сегодня</div>
+          <div class="date-strip-item">Месяц</div>
+        </div>
+
+        <!-- KBJU Card -->
         <div class="glass-card">
           <div class="kbju-card-header">
             <div>
-              <div class="card-section-title">📊 ТВОЯ ИНДИВИДУАЛЬНАЯ НОРМА КБЖУ</div>
-              <div id="home-user-goal-text" style="font-weight: 800; color: #fff; font-size: 14px; margin-top: 2px;">Норма: 2255 ккал/день</div>
+              <div class="card-section-title">КБЖУ</div>
+              <div id="calories-left-text" style="font-size: 16px; font-weight: 800; color: #fff; margin-top: 2px;">Осталось 2661 ккал</div>
             </div>
+            <button class="btn-text-ghost" onclick="resetNutritionToday()">Сбросить</button>
           </div>
 
           <div class="kbju-overview-row">
@@ -216,103 +161,51 @@
               </svg>
               <div class="calorie-ring-text">
                 <span id="calories-logged-val" class="cal-num">0</span>
-                <span id="calories-goal-val" class="cal-sub">из 2255</span>
+                <span id="calories-goal-val" class="cal-sub">из 2661</span>
               </div>
             </div>
 
             <div class="macros-grid">
               <div class="macro-item">
                 <div class="macro-label">Б <span id="macro-p-percent" class="macro-pct">0%</span></div>
-                <div id="macro-p-gram" class="macro-gram">0 / 150г</div>
                 <div class="macro-progress"><div id="macro-p-bar" class="bar-fill emerald" style="width: 0%"></div></div>
               </div>
               <div class="macro-item">
                 <div class="macro-label">Ж <span id="macro-f-percent" class="macro-pct">0%</span></div>
-                <div id="macro-f-gram" class="macro-gram">0 / 67г</div>
                 <div class="macro-progress"><div id="macro-f-bar" class="bar-fill yellow" style="width: 0%"></div></div>
               </div>
               <div class="macro-item">
                 <div class="macro-label">У <span id="macro-c-percent" class="macro-pct">0%</span></div>
-                <div id="macro-c-gram" class="macro-gram">0 / 230г</div>
                 <div class="macro-progress"><div id="macro-c-bar" class="bar-fill cyan" style="width: 0%"></div></div>
               </div>
               <div class="macro-item">
                 <div class="macro-label">К <span id="macro-fib-percent" class="macro-pct">0%</span></div>
-                <div id="macro-fib-gram" class="macro-gram">0 / 30г</div>
                 <div class="macro-progress"><div id="macro-fib-bar" class="bar-fill purple" style="width: 0%"></div></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 5. Sleep Tracker Card -->
-        <div class="sleep-tracker-card">
-          <div class="sleep-header">
-            <span class="card-section-title">🌙 ТРЕКЕР СНА & ВОССТАНОВЛЕНИЯ</span>
-            <span id="sleep-duration-badge" style="font-size: 12px; font-weight: 800; color: var(--purple-main);">7.5 ч</span>
+        <!-- Drinks / Water Accordion -->
+        <div class="glass-card water-accordion-card">
+          <div class="water-accordion-header" onclick="toggleWaterAccordion()">
+            <div>
+              <div class="card-section-title">💧 НАПИТКИ / ВОДА</div>
+              <div id="water-summary-text" style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 2px;">0.0 / 2.9 л • Жидкости всего 0.0 л</div>
+            </div>
+            <div class="accordion-arrow">▼</div>
           </div>
 
-          <div class="sleep-grid-inputs">
-            <div class="sleep-input-box">
-              <label>Отход ко сну</label>
-              <input type="time" id="sleep-bedtime" class="sleep-time-input" value="23:00" onchange="updateSleepAnalysis()" />
+          <div id="water-accordion-body" class="water-accordion-body">
+            <div class="water-quick-btns">
+              <button class="btn-water-action" onclick="addWater(0.25)">+250 мл 💧</button>
+              <button class="btn-water-action" onclick="addWater(0.5)">+500 мл 🧊</button>
+              <button class="btn-water-action" onclick="addWater(1.0)">+1.0 л 🌊</button>
             </div>
-            <div class="sleep-input-box">
-              <label>Время подъема</label>
-              <input type="time" id="sleep-waketime" class="sleep-time-input" value="06:30" onchange="updateSleepAnalysis()" />
-            </div>
-          </div>
-
-          <div class="sleep-quality-selector">
-            <div class="sleep-quality-label">
-              <span>Качество сна (1-10)</span>
-              <span id="quality-rating-val" style="color: var(--purple-main); font-weight: 800;">8/10</span>
-            </div>
-            <div class="rating-chips-scroll">
-              <div class="rating-chip" onclick="selectSleepRating(1)">1</div>
-              <div class="rating-chip" onclick="selectSleepRating(2)">2</div>
-              <div class="rating-chip" onclick="selectSleepRating(3)">3</div>
-              <div class="rating-chip" onclick="selectSleepRating(4)">4</div>
-              <div class="rating-chip" onclick="selectSleepRating(5)">5</div>
-              <div class="rating-chip" onclick="selectSleepRating(6)">6</div>
-              <div class="rating-chip" onclick="selectSleepRating(7)">7</div>
-              <div class="rating-chip selected" onclick="selectSleepRating(8)">8</div>
-              <div class="rating-chip" onclick="selectSleepRating(9)">9</div>
-              <div class="rating-chip" onclick="selectSleepRating(10)">10</div>
-            </div>
-          </div>
-
-          <div class="sleep-advice-box">
-            <div class="advice-title">💡 Совет по улучшению сна:</div>
-            <div id="sleep-advice-text">Отличная продолжительность! Старайтесь проветривать спальню перед сном и засыпать в полной темноте.</div>
           </div>
         </div>
 
-        <!-- 6. Water Vessel Card -->
-        <div class="water-wave-container">
-          <div class="card-section-title">ИНТЕРАКТИВНЫЙ БАЛАНС ВОДЫ</div>
-          <div class="liquid-vessel">
-            <div id="liquid-wave-bar" class="liquid-fill-bar" style="height: 0%;"></div>
-            <div class="liquid-text-center">
-              <div id="liquid-current-text" class="liquid-val">0.0</div>
-              <div id="liquid-goal-text" class="liquid-sub">из 2.6 л</div>
-            </div>
-          </div>
-          <div class="water-quick-btns">
-            <button class="btn-water-action" onclick="addWater(0.25)">+250 мл 💧</button>
-            <button class="btn-water-action" onclick="addWater(0.5)">+500 мл 🧊</button>
-            <button class="btn-water-action" onclick="addWater(1.0)">+1.0 л 🌊</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 2: ПИТАНИЕ -->
-      <section id="tab-nutrition" class="tab-screen">
-        <div class="section-heading">
-          <h2>Питание & КБЖУ</h2>
-          <p>Дневник приемов пищи и подсчет съеденного.</p>
-        </div>
-
+        <!-- Meals List (Breakfast, Lunch, Dinner, Snack) -->
         <div class="meals-list">
           <div class="meal-block-card">
             <div class="meal-block-header">
@@ -343,39 +236,30 @@
               <span class="empty-hint">Нажми + чтобы добавить ужин</span>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- TAB 3: JOURNAL -->
-      <section id="tab-journal" class="tab-screen">
-        <div class="section-heading">
-          <h2>Дневник & Инсайты</h2>
-          <p>Фиксируйте мысли, знания и выводы дня.</p>
-        </div>
-
-        <div class="glass-card">
-          <div class="glass-card-top-bar">
-            <span class="card-section-title">НОВАЯ ЗАПИСЬ ДНЕВНИКА</span>
-            <button class="btn-primary-sm" onclick="openAddJournalModal()">+ Написать инсайт</button>
-          </div>
-
-          <div id="journal-feed-container" class="journal-feed">
-            <!-- Dynamically populated -->
+          <div class="meal-block-card">
+            <div class="meal-block-header">
+              <span class="meal-title">Перекус</span>
+              <button class="btn-plus-icon" onclick="openAddFoodModal('Перекус')">+</button>
+            </div>
+            <div id="meal-items-snack" class="meal-items-container">
+              <span class="empty-hint">Нажми + чтобы добавить перекус</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 4: PATH -->
+      <!-- TAB 3: ПУТЬ (PROTOCOL HABITS & RITUALS) -->
       <section id="tab-path" class="tab-screen">
         <div class="section-heading">
-          <h2>Привычки & Уход за собой</h2>
-          <p>Ежедневные ритуалы, здоровье и дисциплина.</p>
+          <h2>Путь</h2>
+          <p>Ежедневные привычки, дисциплина и стрики.</p>
         </div>
 
         <div class="glass-card">
           <div class="glass-card-top-bar">
             <span class="card-section-title">ЕЖЕДНЕВНЫЕ РИТУАЛЫ</span>
-            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Свой ритуал</button>
+            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Ритуал</button>
           </div>
 
           <div id="habits-list-container" class="habits-list">
@@ -384,40 +268,104 @@
         </div>
       </section>
 
-      <!-- TAB 5: SETTINGS -->
+      <!-- TAB 4: ЛИЧНОЕ (PERSONAL HUB: WORKOUTS, BOOKS, APPEARANCE) -->
+      <section id="tab-personal" class="tab-screen">
+        <div class="section-heading">
+          <h2>Личное</h2>
+          <p>Тренировки, книги и замеры тела.</p>
+        </div>
+
+        <div class="sub-nav-pills">
+          <button class="pill-btn active" id="personal-sub-workout" onclick="switchPersonalSubTab('workout')">🏋️‍♂️ Тренировки</button>
+          <button class="pill-btn" id="personal-sub-books" onclick="switchPersonalSubTab('books')">📚 Книги</button>
+          <button class="pill-btn" id="personal-sub-body" onclick="switchPersonalSubTab('body')">🪞 Внешность</button>
+        </div>
+
+        <!-- Personal Sub Tab 1: Workouts -->
+        <div id="personal-section-workout" class="personal-sub-content">
+          <div class="glass-card">
+            <div class="glass-card-top-bar">
+              <span class="card-section-title">ЖУРНАЛ ТРЕНИРОВОК</span>
+              <button class="btn-primary-sm" onclick="openAddWorkoutModal()">+ Тренировка</button>
+            </div>
+            <div id="workouts-list-container">
+              <div class="empty-box">Нет записей тренировок. Нажмите "+ Тренировка".</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Sub Tab 2: Books -->
+        <div id="personal-section-books" class="personal-sub-content" style="display: none;">
+          <div class="glass-card">
+            <div class="glass-card-top-bar">
+              <span class="card-section-title">СПИСОК КНИГ</span>
+              <button class="btn-primary-sm" onclick="openAddBookModal()">+ Добавить книгу</button>
+            </div>
+            <div id="books-list-container">
+              <div class="empty-box">Список книг пуст. Нажмите "+ Добавить книгу".</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Sub Tab 3: Body & Appearance -->
+        <div id="personal-section-body" class="personal-sub-content" style="display: none;">
+          <div class="glass-card">
+            <div class="glass-card-top-bar">
+              <span class="card-section-title">ПАРАМЕТРЫ ТЕЛА И ВЕС</span>
+              <button class="btn-primary-sm" onclick="logNewWeightModal()">+ Замер веса</button>
+            </div>
+            <div id="body-measurements-container" style="padding: 10px 0;">
+              <div style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px;" id="profile-current-weight-display">Текущий вес: 75.0 кг</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Рост: 178 см • Цель: Похудение</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: НАСТРОЙКИ (SETTINGS & PROTOCOL PROFILE) -->
       <section id="tab-settings" class="tab-screen">
         <div class="glass-card profile-card">
           <div class="profile-avatar-large">
-            <span id="profile-avatar-char-lg">S</span>
+            <span id="profile-avatar-char-lg">P</span>
           </div>
           <div class="profile-username" id="profile-username-display">@username</div>
           <div class="profile-badges-row">
-            <span class="badge-free">✦ SENSE Pro</span>
-            <button class="badge-theme-select" onclick="openOnboardingAgain()">⚙️ Изменить профиль</button>
+            <span class="badge-free">Free</span>
+            <button class="badge-theme-select" onclick="cycleThemeColor()">Тема: Green ></button>
           </div>
         </div>
 
         <div class="settings-list">
           <div class="settings-card">
-            <div class="settings-item" onclick="openOnboardingAgain()">
+            <div class="settings-item">
               <div class="settings-left">
-                <div>⚖️</div>
+                <div>📱</div>
                 <div>
-                  <div class="settings-title">Параметры и Норма КБЖУ</div>
-                  <div class="settings-sub" id="settings-user-stats-summary">75кг • 178см</div>
+                  <div class="settings-title">Экран при открытии</div>
+                  <div class="settings-sub">Сегодня</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-item">
+              <div class="settings-left">
+                <div>🌐</div>
+                <div>
+                  <div class="settings-title">Язык</div>
+                  <div class="settings-sub">Русский</div>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="settings-card mt-16">
-            <button class="btn-danger-full" onclick="resetAllAppData()">Сбросить все данные SENSE</button>
+            <button class="btn-danger-full" onclick="resetAllAppData()">Сбросить данные Protocol</button>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- Bottom Navigation Bar (5 Protocol Tabs) -->
     <nav class="bottom-nav">
       <button class="nav-item active" data-tab="today">
         <div class="nav-icon">
@@ -433,18 +381,18 @@
         <span class="nav-label">Питание</span>
       </button>
 
-      <button class="nav-item" data-tab="journal">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-        </div>
-        <span class="nav-label">Дневник</span>
-      </button>
-
       <button class="nav-item" data-tab="path">
         <div class="nav-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path></svg>
         </div>
         <span class="nav-label">Путь</span>
+      </button>
+
+      <button class="nav-item" data-tab="personal">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <span class="nav-label">Личное</span>
       </button>
 
       <button class="nav-item" data-tab="settings">
