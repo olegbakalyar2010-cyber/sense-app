@@ -1,4 +1,4 @@
-/* PROTOCOL Life OS — Client Logic & Health System */
+/* PROTOCOL Life OS — Client Logic & Full Features (No AI) */
 
 const tg = window.Telegram?.WebApp || null;
 
@@ -15,12 +15,14 @@ function triggerHaptic(type = 'light') {
   }
 }
 
-// Initial State (Matching Protocol Defaults)
+// State
 const DEFAULT_STATE = {
   userProfile: {
     name: 'Пользователь',
-    weight: 75,
-    height: 178,
+    weight: 75.0,
+    waist: 82,
+    chest: 100,
+    biceps: 36,
     caloriesGoal: 2661,
     waterGoal: 2.9,
     p: 160,
@@ -29,6 +31,7 @@ const DEFAULT_STATE = {
     fib: 30
   },
   waterCurrent: 0.0,
+  drinksLog: [],
   sleepData: {
     bedtime: '23:00',
     waketime: '06:30',
@@ -45,6 +48,9 @@ const DEFAULT_STATE = {
   ideas: [],
   workouts: [],
   books: [],
+  bodyLog: [
+    { date: '28 Июля', weight: 75.0, waist: 82, chest: 100, biceps: 36 }
+  ],
   habits: [
     { id: 1, icon: '💧', title: 'Питьевой режим (Вода)', completed: false, streak: 6 },
     { id: 2, icon: '🏃‍♂️', title: 'Тренировка / Физ. активность', completed: false, streak: 4 },
@@ -54,10 +60,10 @@ const DEFAULT_STATE = {
   ]
 };
 
-let appState = JSON.parse(localStorage.getItem('PROTOCOL_APP_DATA')) || DEFAULT_STATE;
+let appState = JSON.parse(localStorage.getItem('PROTOCOL_APP_DATA_V3')) || DEFAULT_STATE;
 
 function saveState() {
-  localStorage.setItem('PROTOCOL_APP_DATA', JSON.stringify(appState));
+  localStorage.setItem('PROTOCOL_APP_DATA_V3', JSON.stringify(appState));
   renderAll();
 }
 
@@ -113,6 +119,15 @@ function switchTab(tabId) {
   }
 }
 
+function switchSubTab(subTab) {
+  document.getElementById('subtab-btn-today').classList.toggle('active', subTab === 'today');
+  document.getElementById('subtab-btn-history').classList.toggle('active', subTab === 'history');
+
+  document.getElementById('today-main-view').style.display = subTab === 'today' ? 'block' : 'none';
+  document.getElementById('today-history-view').style.display = subTab === 'history' ? 'block' : 'none';
+  triggerHaptic('light');
+}
+
 function renderAll() {
   renderTodaySummary();
   renderNutrition();
@@ -141,7 +156,7 @@ function getLoggedMacros() {
   return { p, f, c, fib };
 }
 
-// 1. PROTOCOL HOMEPAGE DASHBOARD
+// 1. TODAY SUMMARY
 function renderTodaySummary() {
   const calGoal = appState.userProfile.caloriesGoal || 2661;
   const waterGoal = appState.userProfile.waterGoal || 2.9;
@@ -180,8 +195,12 @@ function renderTodaySummary() {
   }
 
   const sleepBadge = document.getElementById('home-sleep-time-badge');
+  const sleepSub = document.getElementById('home-sleep-status-sub');
   if (sleepBadge && appState.sleepData) {
     sleepBadge.textContent = appState.sleepData.bedtime || '23:00';
+    if (sleepSub) {
+      sleepSub.textContent = `Качество: ${appState.sleepData.quality || 8}/10`;
+    }
   }
 }
 
@@ -214,7 +233,6 @@ function renderNutrition() {
   updateMacro('c', macros.c, appState.userProfile.c || 320);
   updateMacro('fib', macros.fib, appState.userProfile.fib || 30);
 
-  // Water summary text
   const waterSummary = document.getElementById('water-summary-text');
   if (waterSummary) {
     waterSummary.textContent = `${appState.waterCurrent.toFixed(1)} / ${waterGoal} л • Жидкости всего ${appState.waterCurrent.toFixed(1)} л`;
@@ -246,16 +264,31 @@ function renderNutrition() {
   renderMealSection('Перекус', 'meal-items-snack');
 }
 
+function selectNutritionDate(dateLabel, el) {
+  document.querySelectorAll('.date-strip-item').forEach(item => item.classList.remove('active'));
+  el.classList.add('active');
+  triggerHaptic('light');
+}
+
 function toggleWaterAccordion() {
   const body = document.getElementById('water-accordion-body');
+  const arrow = document.getElementById('water-accordion-arrow');
   if (body) {
     const isOpen = body.style.display === 'block';
     body.style.display = isOpen ? 'none' : 'block';
+    if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
   }
 }
 
 function addWater(amount) {
   appState.waterCurrent += amount;
+  triggerHaptic('medium');
+  saveState();
+}
+
+function addDrinkCustom(name, amount) {
+  appState.waterCurrent += amount;
+  appState.drinksLog.unshift({ name, amount, date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
   triggerHaptic('medium');
   saveState();
 }
@@ -300,7 +333,26 @@ function toggleHabit(id) {
   }
 }
 
-// 4. PERSONAL (WORKOUTS, BOOKS, BODY)
+function openAddHabitModal() {
+  document.getElementById('modal-title').textContent = 'Новый Ритуал Protocol';
+  document.getElementById('modal-body').innerHTML = `
+    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название привычки" />
+    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать ритуал</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function saveHabitFromModal() {
+  const title = document.getElementById('habit-input-title').value.trim();
+  if (title) {
+    appState.habits.push({ id: Date.now(), icon: '✨', title, completed: false, streak: 1 });
+    triggerHaptic('success');
+    saveState();
+    closeModal();
+  }
+}
+
+// 4. PERSONAL (WORKOUTS, BOOKS, BODY MEASUREMENTS)
 function switchPersonalSubTab(subTab) {
   document.getElementById('personal-sub-workout').classList.toggle('active', subTab === 'workout');
   document.getElementById('personal-sub-books').classList.toggle('active', subTab === 'books');
@@ -344,49 +396,115 @@ function renderPersonal() {
         </div>
       `).join('');
   }
+
+  // Body Measurements
+  const bodyContainer = document.getElementById('body-measurements-container');
+  if (bodyContainer) {
+    bodyContainer.innerHTML = `
+      <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 8px;">Текущие замеры тела:</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+        <div class="macro-item">
+          <div class="macro-label">⚖️ ВЕС</div>
+          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.weight || 75} кг</div>
+        </div>
+        <div class="macro-item">
+          <div class="macro-label">📏 ТАЛИЯ</div>
+          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.waist || 82} см</div>
+        </div>
+        <div class="macro-item">
+          <div class="macro-label">💪 БИЦЕПС</div>
+          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.biceps || 36} см</div>
+        </div>
+        <div class="macro-item">
+          <div class="macro-label">👕 ГРУДЬ</div>
+          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.chest || 100} см</div>
+        </div>
+      </div>
+    `;
+  }
 }
 
-// MODALS
-function openAddNoteModal() {
-  document.getElementById('modal-title').textContent = 'Новая Заметка';
+// MODALS (NOTES LIST & IDEAS LIST)
+function openNotesListModal() {
+  document.getElementById('modal-title').textContent = '📝 Мои Заметки';
+  const notesHtml = appState.notes.length === 0
+    ? `<div class="empty-box">Заметок пока нет. Нажмите "Создать" ниже.</div>`
+    : appState.notes.map((n, i) => `
+      <div class="journal-card" style="margin-bottom: 8px;">
+        <div class="journal-meta">
+          <span class="journal-date">${n.date}</span>
+          <button class="btn-text-ghost" onclick="deleteNote(${i})">✕</button>
+        </div>
+        <div class="journal-content">${n.text}</div>
+      </div>
+    `).join('');
+
   document.getElementById('modal-body').innerHTML = `
-    <textarea id="input-note-text" class="modal-input" rows="4" placeholder="Запишите вашу заметку..."></textarea>
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveNoteFromModal()">Сохранить</button>
+    <div style="max-height: 260px; overflow-y: auto;">${notesHtml}</div>
+    <textarea id="input-new-note-text" class="modal-input" rows="3" placeholder="Новая заметка..."></textarea>
+    <button class="btn-primary-sm" style="margin-top: 8px; width: 100%" onclick="saveNoteFromModal()">+ Создать заметку</button>
   `;
   document.getElementById('app-modal').classList.add('active');
 }
 
 function saveNoteFromModal() {
-  const text = document.getElementById('input-note-text').value.trim();
+  const text = document.getElementById('input-new-note-text').value.trim();
   if (text) {
     appState.notes.unshift({ id: Date.now(), text, date: new Date().toLocaleDateString('ru-RU') });
     triggerHaptic('success');
     saveState();
-    closeModal();
+    openNotesListModal();
   }
 }
 
-function openAddIdeaModal() {
-  document.getElementById('modal-title').textContent = '💡 Новая Идея';
+function deleteNote(index) {
+  appState.notes.splice(index, 1);
+  triggerHaptic('light');
+  saveState();
+  openNotesListModal();
+}
+
+function openIdeasListModal() {
+  document.getElementById('modal-title').textContent = '💡 Мои Идеи';
+  const ideasHtml = appState.ideas.length === 0
+    ? `<div class="empty-box">Идей пока нет. Нажмите "Сохранить идею" ниже.</div>`
+    : appState.ideas.map((idea, i) => `
+      <div class="journal-card" style="margin-bottom: 8px;">
+        <div class="journal-meta">
+          <span class="journal-date">${idea.date}</span>
+          <button class="btn-text-ghost" onclick="deleteIdea(${i})">✕</button>
+        </div>
+        <div class="journal-content">${idea.text}</div>
+      </div>
+    `).join('');
+
   document.getElementById('modal-body').innerHTML = `
-    <textarea id="input-idea-text" class="modal-input" rows="4" placeholder="Запишите инсайт или идею..."></textarea>
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveIdeaFromModal()">Сохранить идею</button>
+    <div style="max-height: 260px; overflow-y: auto;">${ideasHtml}</div>
+    <textarea id="input-new-idea-text" class="modal-input" rows="3" placeholder="Запишите инсайт или идею..."></textarea>
+    <button class="btn-primary-sm" style="margin-top: 8px; width: 100%" onclick="saveIdeaFromModal()">+ Сохранить идею</button>
   `;
   document.getElementById('app-modal').classList.add('active');
 }
 
 function saveIdeaFromModal() {
-  const text = document.getElementById('input-idea-text').value.trim();
+  const text = document.getElementById('input-new-idea-text').value.trim();
   if (text) {
     appState.ideas.unshift({ id: Date.now(), text, date: new Date().toLocaleDateString('ru-RU') });
     triggerHaptic('success');
     saveState();
-    closeModal();
+    openIdeasListModal();
   }
 }
 
+function deleteIdea(index) {
+  appState.ideas.splice(index, 1);
+  triggerHaptic('light');
+  saveState();
+  openIdeasListModal();
+}
+
 function openSleepModal() {
-  document.getElementById('modal-title').textContent = '🌙 Записать Сон';
+  document.getElementById('modal-title').textContent = '🌙 Записать Сон Protocol';
   document.getElementById('modal-body').innerHTML = `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <div>
@@ -398,7 +516,11 @@ function openSleepModal() {
         <input type="time" id="input-sleep-wake" class="modal-input" value="${appState.sleepData.waketime || '06:30'}" />
       </div>
     </div>
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveSleepFromModal()">Сохранить сон</button>
+    <div style="margin-top: 10px;">
+      <label style="font-size: 11px; color: var(--text-muted);">Оценка качества (1-10)</label>
+      <input type="number" id="input-sleep-quality" class="modal-input" min="1" max="10" value="${appState.sleepData.quality || 8}" />
+    </div>
+    <button class="btn-primary-sm" style="margin-top: 12px; width: 100%" onclick="saveSleepFromModal()">Сохранить сон</button>
   `;
   document.getElementById('app-modal').classList.add('active');
 }
@@ -406,8 +528,39 @@ function openSleepModal() {
 function saveSleepFromModal() {
   const bedtime = document.getElementById('input-sleep-bed').value;
   const waketime = document.getElementById('input-sleep-wake').value;
+  const quality = Number(document.getElementById('input-sleep-quality').value) || 8;
+
   appState.sleepData.bedtime = bedtime;
   appState.sleepData.waketime = waketime;
+  appState.sleepData.quality = quality;
+  triggerHaptic('success');
+  saveState();
+  closeModal();
+}
+
+function openBodyMeasurementModal() {
+  document.getElementById('modal-title').textContent = '🪞 Замер теля и веса';
+  document.getElementById('modal-body').innerHTML = `
+    <input type="number" id="input-b-weight" class="modal-input" placeholder="Вес (кг)" value="${appState.userProfile.weight || 75}" step="0.1" />
+    <input type="number" id="input-b-waist" class="modal-input" placeholder="Талия (см)" value="${appState.userProfile.waist || 82}" />
+    <input type="number" id="input-b-chest" class="modal-input" placeholder="Грудь (см)" value="${appState.userProfile.chest || 100}" />
+    <input type="number" id="input-b-biceps" class="modal-input" placeholder="Бицепс (см)" value="${appState.userProfile.biceps || 36}" />
+    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveBodyMeasurementsFromModal()">Сохранить замеры</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function saveBodyMeasurementsFromModal() {
+  const weight = Number(document.getElementById('input-b-weight').value) || 75;
+  const waist = Number(document.getElementById('input-b-waist').value) || 82;
+  const chest = Number(document.getElementById('input-b-chest').value) || 100;
+  const biceps = Number(document.getElementById('input-b-biceps').value) || 36;
+
+  appState.userProfile.weight = weight;
+  appState.userProfile.waist = waist;
+  appState.userProfile.chest = chest;
+  appState.userProfile.biceps = biceps;
+
   triggerHaptic('success');
   saveState();
   closeModal();
@@ -497,14 +650,29 @@ function closeModal() {
   if (modal) modal.classList.remove('active');
 }
 
-function closeTodaySummary() {
-  alert('🎉 День успешно закрыт! Отличная дисциплина!');
+function closeTodaySummaryModal() {
+  document.getElementById('modal-title').textContent = '🎉 Закрытие дня PROTOCOL';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="text-align: center; padding: 10px;">
+      <div style="font-size: 32px; margin-bottom: 8px;">🔥</div>
+      <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">День официально закрыт!</div>
+      <div style="font-size: 13px; color: var(--text-muted);">Ваш стрик увеличен! Отличная дисциплина и работа над собой.</div>
+    </div>
+    <button class="btn-primary-sm" style="margin-top: 12px; width: 100%" onclick="finishCloseDay()">Подтвердить закрытие дня</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function finishCloseDay() {
+  appState.streak += 1;
   triggerHaptic('success');
+  saveState();
+  closeModal();
 }
 
 function resetAllAppData() {
   if (confirm('Сбросить все данные Protocol?')) {
-    localStorage.removeItem('PROTOCOL_APP_DATA');
+    localStorage.removeItem('PROTOCOL_APP_DATA_V3');
     appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
     saveState();
     triggerHaptic('success');

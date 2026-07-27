@@ -33,14 +33,14 @@
       </div>
 
       <div class="header-stats">
-        <button class="icon-chip" title="Заметки" onclick="openAddNoteModal()">
+        <button class="icon-chip" title="Заметки" onclick="openNotesListModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
         </button>
 
-        <button class="icon-chip" title="Идеи" onclick="openAddIdeaModal()">
+        <button class="icon-chip" title="Идеи" onclick="openIdeasListModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 18h6"></path><path d="M10 22h4"></path>
             <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.62 2.95 1.63 3.99.64.67 1.11 1.42 1.37 2.41"></path>
@@ -63,65 +63,90 @@
       <!-- TAB 1: СЕГОДНЯ (PROTOCOL HOMEPAGE) -->
       <section id="tab-today" class="tab-screen active">
         <div class="sub-nav-pills">
-          <button class="pill-btn active" data-subtab="today" onclick="switchSubTab('today')">Сегодня</button>
-          <button class="pill-btn" data-subtab="history" onclick="switchSubTab('history')">История</button>
-          <button class="pill-btn highlight" onclick="closeTodaySummary()">Закрыть день</button>
-          <button class="pill-btn icon-only" title="AI Sparkles" onclick="triggerAISparkle()">✨ AI</button>
+          <button class="pill-btn active" id="subtab-btn-today" onclick="switchSubTab('today')">Сегодня</button>
+          <button class="pill-btn" id="subtab-btn-history" onclick="switchSubTab('history')">История</button>
+          <button class="pill-btn highlight" onclick="closeTodaySummaryModal()">Закрыть день</button>
         </div>
 
-        <!-- Quad Grid Summary Card (Exact Protocol Layout) -->
-        <div class="summary-card-container">
-          <div class="summary-card-header">СВОДКА</div>
-          <div class="summary-grid">
-            <div class="center-progress-badge">
-              <svg class="ring-svg" viewBox="0 0 100 100">
-                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-                <circle id="overall-ring-bar" class="ring-bar" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
-              </svg>
-              <div class="ring-content">
-                <span id="overall-percentage" class="ring-val">0%</span>
-                <span class="ring-label">СВОДКА</span>
+        <!-- History Archive View (Hidden by default) -->
+        <div id="today-history-view" style="display: none;">
+          <div class="glass-card">
+            <div class="card-section-title">📜 АРХИВ ПРОШЛЫХ ДНЕЙ</div>
+            <div class="history-days-list">
+              <div class="history-item-row" onclick="viewHistoryDay('27.07')">
+                <div>
+                  <div style="font-weight: 700; color: #fff;">27 Июля</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">КБЖУ: 2150 ккал • Вода: 2.5л • Ритуалы: 5/5</div>
+                </div>
+                <span class="history-badge-success">Успех ✓</span>
+              </div>
+              <div class="history-item-row" onclick="viewHistoryDay('26.07')">
+                <div>
+                  <div style="font-weight: 700; color: #fff;">26 Июля</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">КБЖУ: 2400 ккал • Вода: 2.8л • Ритуалы: 4/5</div>
+                </div>
+                <span class="history-badge-success">Успех ✓</span>
               </div>
             </div>
-
-            <div class="summary-card card-tasks" onclick="switchTab('path')">
-              <div class="card-title">ДЕЛА</div>
-              <div id="val-tasks-percent" class="card-value">0%</div>
-            </div>
-
-            <div class="summary-card card-kbju" onclick="switchTab('nutrition')">
-              <div class="card-title">КБЖУ</div>
-              <div id="val-kbju-percent" class="card-value">0%</div>
-            </div>
-
-            <div class="summary-card card-workouts" onclick="switchTab('personal')">
-              <div class="card-title">ТРЕНИРОВКИ</div>
-              <div id="val-workouts-percent" class="card-value">0%</div>
-            </div>
-
-            <div class="summary-card card-water" onclick="switchTab('nutrition')">
-              <div class="card-title">ВОДА</div>
-              <div id="val-water-percent" class="card-value">0%</div>
-            </div>
           </div>
         </div>
 
-        <!-- Lower Quick Action Cards (Notes & Sleep) -->
-        <div class="quick-action-cards-grid">
-          <div class="quick-card-item" onclick="switchTab('personal')">
-            <div class="quick-card-title">
-              <span>📝 ЗАМЕТКИ</span>
-              <span id="home-notes-count-badge" class="quick-badge">0</span>
+        <!-- Today Main Summary View -->
+        <div id="today-main-view">
+          <!-- Quad Grid Summary Card (Exact Protocol Layout) -->
+          <div class="summary-card-container">
+            <div class="summary-card-header">СВОДКА</div>
+            <div class="summary-grid">
+              <div class="center-progress-badge">
+                <svg class="ring-svg" viewBox="0 0 100 100">
+                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                  <circle id="overall-ring-bar" class="ring-bar" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                </svg>
+                <div class="ring-content">
+                  <span id="overall-percentage" class="ring-val">0%</span>
+                  <span class="ring-label">СВОДКА</span>
+                </div>
+              </div>
+
+              <div class="summary-card card-tasks" onclick="switchTab('path')">
+                <div class="card-title">ДЕЛА</div>
+                <div id="val-tasks-percent" class="card-value">0%</div>
+              </div>
+
+              <div class="summary-card card-kbju" onclick="switchTab('nutrition')">
+                <div class="card-title">КБЖУ</div>
+                <div id="val-kbju-percent" class="card-value">0%</div>
+              </div>
+
+              <div class="summary-card card-workouts" onclick="switchTab('personal')">
+                <div class="card-title">ТРЕНИРОВКИ</div>
+                <div id="val-workouts-percent" class="card-value">0%</div>
+              </div>
+
+              <div class="summary-card card-water" onclick="switchTab('nutrition')">
+                <div class="card-title">ВОДА</div>
+                <div id="val-water-percent" class="card-value">0%</div>
+              </div>
             </div>
-            <div class="quick-card-sub" id="home-notes-subtitle">Пока пусто</div>
           </div>
 
-          <div class="quick-card-item" onclick="openSleepModal()">
-            <div class="quick-card-title">
-              <span>🌙 СОН</span>
-              <span id="home-sleep-time-badge" class="quick-badge">23:00</span>
+          <!-- Lower Quick Action Cards (Notes & Sleep) -->
+          <div class="quick-action-cards-grid">
+            <div class="quick-card-item" onclick="openNotesListModal()">
+              <div class="quick-card-title">
+                <span>📝 ЗАМЕТКИ</span>
+                <span id="home-notes-count-badge" class="quick-badge">0</span>
+              </div>
+              <div class="quick-card-sub" id="home-notes-subtitle">Пока пусто</div>
             </div>
-            <div class="quick-card-sub">Записать прошлую ночь</div>
+
+            <div class="quick-card-item" onclick="openSleepModal()">
+              <div class="quick-card-title">
+                <span>🌙 СОН</span>
+                <span id="home-sleep-time-badge" class="quick-badge">23:00</span>
+              </div>
+              <div class="quick-card-sub" id="home-sleep-status-sub">Записать прошлую ночь</div>
+            </div>
           </div>
         </div>
       </section>
@@ -135,12 +160,12 @@
 
         <!-- Date Strip Bar -->
         <div class="date-scroll-strip">
-          <div class="date-strip-item">24.07</div>
-          <div class="date-strip-item">25.07</div>
-          <div class="date-strip-item">26.07</div>
-          <div class="date-strip-item">27.07</div>
-          <div class="date-strip-item active">Сегодня</div>
-          <div class="date-strip-item">Месяц</div>
+          <div class="date-strip-item" onclick="selectNutritionDate('24.07', this)">24.07</div>
+          <div class="date-strip-item" onclick="selectNutritionDate('25.07', this)">25.07</div>
+          <div class="date-strip-item" onclick="selectNutritionDate('26.07', this)">26.07</div>
+          <div class="date-strip-item" onclick="selectNutritionDate('27.07', this)">27.07</div>
+          <div class="date-strip-item active" onclick="selectNutritionDate('Сегодня', this)">Сегодня</div>
+          <div class="date-strip-item" onclick="selectNutritionDate('Месяц', this)">Месяц</div>
         </div>
 
         <!-- KBJU Card -->
@@ -193,7 +218,7 @@
               <div class="card-section-title">💧 НАПИТКИ / ВОДА</div>
               <div id="water-summary-text" style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 2px;">0.0 / 2.9 л • Жидкости всего 0.0 л</div>
             </div>
-            <div class="accordion-arrow">▼</div>
+            <div class="accordion-arrow" id="water-accordion-arrow">▼</div>
           </div>
 
           <div id="water-accordion-body" class="water-accordion-body">
@@ -201,6 +226,11 @@
               <button class="btn-water-action" onclick="addWater(0.25)">+250 мл 💧</button>
               <button class="btn-water-action" onclick="addWater(0.5)">+500 мл 🧊</button>
               <button class="btn-water-action" onclick="addWater(1.0)">+1.0 л 🌊</button>
+            </div>
+            <div class="water-quick-btns" style="margin-top: 6px;">
+              <button class="btn-water-action" onclick="addDrinkCustom('Кофе ☕', 0.2)">Кофе ☕</button>
+              <button class="btn-water-action" onclick="addDrinkCustom('Зеленый чай 🍵', 0.3)">Чай 🍵</button>
+              <button class="btn-water-action" onclick="addDrinkCustom('Протеин 🥛', 0.4)">Протеин 🥛</button>
             </div>
           </div>
         </div>
@@ -312,11 +342,10 @@
           <div class="glass-card">
             <div class="glass-card-top-bar">
               <span class="card-section-title">ПАРАМЕТРЫ ТЕЛА И ВЕС</span>
-              <button class="btn-primary-sm" onclick="logNewWeightModal()">+ Замер веса</button>
+              <button class="btn-primary-sm" onclick="openBodyMeasurementModal()">+ Замер тела</button>
             </div>
             <div id="body-measurements-container" style="padding: 10px 0;">
-              <div style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px;" id="profile-current-weight-display">Текущий вес: 75.0 кг</div>
-              <div style="font-size: 12px; color: var(--text-muted);">Рост: 178 см • Цель: Похудение</div>
+              <!-- Dynamically populated -->
             </div>
           </div>
         </div>
@@ -331,7 +360,7 @@
           <div class="profile-username" id="profile-username-display">@username</div>
           <div class="profile-badges-row">
             <span class="badge-free">Free</span>
-            <button class="badge-theme-select" onclick="cycleThemeColor()">Тема: Green ></button>
+            <button class="badge-theme-select">Тема: Green ></button>
           </div>
         </div>
 
