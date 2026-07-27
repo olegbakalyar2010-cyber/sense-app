@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SENSE — Life OS</title>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-emerald">
+  <div class="app-background">
+    <div class="bg-grid"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+  </div>
+
+  <div id="app-container" class="app-container">
+    <!-- Top Header Bar -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="brand-status-dot"></span>
+        <h1 class="brand-title">SENSE</h1>
+        <span id="current-date-badge" class="date-badge">Вт, 28 Июля</span>
+      </div>
+
+      <div class="header-stats">
+        <button id="btn-quick-notes" class="icon-chip" title="Быстрые заметки">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </button>
+
+        <button id="btn-quick-ideas" class="icon-chip" title="Идеи">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8.5 14.5A5 5 0 1 1 15.5 14.5M12 18v3M9 22h6"></path>
+          </svg>
+        </button>
+
+        <div class="streak-chip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 23c-4.97 0-9-3.58-9-8 0-4.08 3.05-7.5 6.94-9.33.39-.18.84.14.79.57-.14 1.25.1 2.53.72 3.65.26.47.93.39 1.07-.13A13.23 13.23 0 0 1 14.2 4.4c.17-.46.74-.63 1.13-.33C18.66 6.64 21 10.5 21 15c0 4.42-4.03 8-9 8z"/>
+          </svg>
+          <span id="streak-count">1</span>
+        </div>
+
+        <div id="user-avatar" class="user-avatar-chip">
+          <span id="user-avatar-char">S</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Screens -->
+    <main id="main-content" class="main-content">
+      
+      <!-- TAB 1: СЕГОДНЯ (DASHBOARD) -->
+      <section id="tab-today" class="tab-screen active">
+        <!-- Sub Navigation -->
+        <div class="sub-nav-pills">
+          <button class="pill-btn active" data-subtab="today">Сегодня</button>
+          <button class="pill-btn" data-subtab="history">История</button>
+          <button class="pill-btn highlight-btn" id="btn-close-day">Закрыть день</button>
+          <div class="pill-spacer"></div>
+          <button class="pill-icon-btn" id="btn-toggle-theme" title="Сменить тему">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+          <button class="pill-icon-btn sparkle-glow" id="btn-ai-sparkle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg>
+          </button>
+        </div>
+
+        <!-- Main Summary Grid (4 Cards + Ring Center) -->
+        <div class="summary-card-container">
+          <div class="summary-card-header">ГЛАВНАЯ СВОДКА</div>
+          
+          <div class="summary-grid">
+            <!-- Center Ring Overlay -->
+            <div class="center-progress-badge">
+              <svg class="ring-svg" viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                <circle id="overall-ring-bar" class="ring-bar" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+              </svg>
+              <div class="ring-content">
+                <span id="overall-percentage" class="ring-val">0%</span>
+                <span class="ring-label">СВОДКА</span>
+              </div>
+            </div>
+
+            <!-- Card 1: Дела -->
+            <div class="summary-card card-tasks" onclick="switchTab('path')">
+              <div class="card-title">ДЕЛА</div>
+              <div id="val-tasks-percent" class="card-value">0%</div>
+              <div class="card-footer-link">подробнее</div>
+            </div>
+
+            <!-- Card 2: КБЖУ -->
+            <div class="summary-card card-kbju" onclick="switchTab('nutrition')">
+              <div class="card-title">КБЖУ</div>
+              <div id="val-kbju-percent" class="card-value">0%</div>
+              <div class="card-footer-link">подробнее</div>
+            </div>
+
+            <!-- Card 3: Тренировки -->
+            <div class="summary-card card-workouts" onclick="switchTab('personal')">
+              <div class="card-title">ТРЕНИРОВКИ</div>
+              <div id="val-workout-percent" class="card-value">0%</div>
+              <div class="card-footer-link">подробнее</div>
+            </div>
+
+            <!-- Card 4: Вода -->
+            <div class="summary-card card-water" onclick="switchTab('nutrition')">
+              <div class="card-title">ВОДА</div>
+              <div id="val-water-percent" class="card-value">0%</div>
+              <div class="card-footer-link">подробнее</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Log Cards Row -->
+        <div class="quick-cards-row">
+          <!-- Card: Заметки -->
+          <div class="glass-action-card" onclick="openNoteModal()">
+            <div class="glass-card-header">
+              <div class="icon-box icon-pink">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </div>
+              <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <div class="glass-card-body">
+              <span class="glass-label">ЗАМЕТКИ</span>
+              <span id="notes-count-display" class="glass-big-val">0</span>
+              <span id="notes-sub-display" class="glass-subtext">Пока пусто</span>
+            </div>
+          </div>
+
+          <!-- Card: Сон -->
+          <div class="glass-action-card" onclick="openSleepModal()">
+            <div class="glass-card-header">
+              <div class="icon-box icon-purple">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              </div>
+              <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <div class="glass-card-body">
+              <span class="glass-label">СОН</span>
+              <span id="sleep-time-display" class="glass-big-val">23:00</span>
+              <span id="sleep-sub-display" class="glass-subtext">Записать прошлую ночь</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ПИТАНИЕ (NUTRITION) -->
+      <section id="tab-nutrition" class="tab-screen">
+        <div class="section-heading">
+          <h2>Питание</h2>
+          <p>Дневник питания, вода и быстрые добавления.</p>
+        </div>
+
+        <!-- Date Strip Bar -->
+        <div class="date-strip-card">
+          <div class="strip-label">ДЕНЬ ПИТАНИЯ</div>
+          <div class="strip-controls">
+            <button class="strip-arrow" id="btn-date-prev">‹</button>
+            <div class="strip-days-scroll" id="days-scroll-container">
+              <!-- Dynamically populated days -->
+            </div>
+            <button class="strip-arrow" id="btn-date-next">›</button>
+          </div>
+        </div>
+
+        <!-- KBJU Card -->
+        <div class="glass-card kbju-main-card">
+          <div class="kbju-card-header">
+            <div>
+              <div class="kbju-sub-title">КБЖУ</div>
+              <div class="kbju-date-text">Сегодня</div>
+            </div>
+            <button class="btn-text-ghost" onclick="resetNutritionToday()">Сбросить</button>
+          </div>
+
+          <div class="kbju-overview-row">
+            <!-- Calorie Circle -->
+            <div class="calorie-ring-box">
+              <svg viewBox="0 0 100 100" class="ring-svg">
+                <circle class="ring-bg" cx="50" cy="50" r="40"></circle>
+                <circle id="calorie-ring-bar" class="ring-bar ring-emerald" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+              </svg>
+              <div class="calorie-ring-text">
+                <span id="calories-logged-val" class="cal-num">0</span>
+                <span id="calories-goal-val" class="cal-sub">из 2661</span>
+              </div>
+            </div>
+
+            <!-- Macros Bar Chips -->
+            <div class="macros-grid">
+              <div class="macro-item">
+                <div class="macro-label">Б <span id="macro-p-percent" class="macro-pct">0%</span></div>
+                <div id="macro-p-gram" class="macro-gram">0г</div>
+                <div class="macro-progress"><div id="macro-p-bar" class="bar-fill emerald" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">Ж <span id="macro-f-percent" class="macro-pct">0%</span></div>
+                <div id="macro-f-gram" class="macro-gram">0г</div>
+                <div class="macro-progress"><div id="macro-f-bar" class="bar-fill yellow" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">У <span id="macro-c-percent" class="macro-pct">0%</span></div>
+                <div id="macro-c-gram" class="macro-gram">0г</div>
+                <div class="macro-progress"><div id="macro-c-bar" class="bar-fill cyan" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">К <span id="macro-fib-percent" class="macro-pct">0%</span></div>
+                <div id="macro-fib-gram" class="macro-gram">0г</div>
+                <div class="macro-progress"><div id="macro-fib-bar" class="bar-fill purple" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drinks / Water Accordion Card -->
+          <div class="water-section-accordion">
+            <div class="water-header">
+              <div class="water-left">
+                <div class="icon-box icon-cyan">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                </div>
+                <div>
+                  <div class="water-title">НАПИТКИ / ВОДА</div>
+                  <div class="water-amount"><span id="water-logged-val">0.0</span> / <span id="water-goal-val">2.9</span> л - Жидкости всего <span id="water-logged-total">0.0</span> л</div>
+                </div>
+              </div>
+              <div class="water-actions">
+                <button class="btn-water-quick" onclick="addWater(0.25)">+250 мл</button>
+                <button class="btn-water-quick" onclick="addWater(0.5)">+500 мл</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meals List -->
+        <div class="meals-list">
+          <!-- Meal Block: Завтрак -->
+          <div class="meal-block-card">
+            <div class="meal-block-header">
+              <span class="meal-title">Завтрак</span>
+              <button class="btn-plus-icon" onclick="openAddFoodModal('Завтрак')">+</button>
+            </div>
+            <div id="meal-items-breakfast" class="meal-items-container">
+              <span class="empty-hint">Нажми + чтобы добавить завтрак</span>
+            </div>
+          </div>
+
+          <!-- Meal Block: Обед -->
+          <div class="meal-block-card">
+            <div class="meal-block-header">
+              <span class="meal-title">Обед</span>
+              <button class="btn-plus-icon" onclick="openAddFoodModal('Обед')">+</button>
+            </div>
+            <div id="meal-items-lunch" class="meal-items-container">
+              <span class="empty-hint">Нажми + чтобы добавить обед</span>
+            </div>
+          </div>
+
+          <!-- Meal Block: Ужин -->
+          <div class="meal-block-card">
+            <div class="meal-block-header">
+              <span class="meal-title">Ужин</span>
+              <button class="btn-plus-icon" onclick="openAddFoodModal('Ужин')">+</button>
+            </div>
+            <div id="meal-items-dinner" class="meal-items-container">
+              <span class="empty-hint">Нажми + чтобы добавить ужин</span>
+            </div>
+          </div>
+
+          <!-- Meal Block: Перекус -->
+          <div class="meal-block-card">
+            <div class="meal-block-header">
+              <span class="meal-title">Перекус</span>
+              <button class="btn-plus-icon" onclick="openAddFoodModal('Перекус')">+</button>
+            </div>
+            <div id="meal-items-snack" class="meal-items-container">
+              <span class="empty-hint">Нажми + чтобы добавить перекус</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ПУТЬ (PATH / HABITS) -->
+      <section id="tab-path" class="tab-screen">
+        <div class="section-heading">
+          <h2>Путь</h2>
+          <p>Ежедневный протокол и управление привычками.</p>
+        </div>
+
+        <div class="glass-card">
+          <div class="glass-card-top-bar">
+            <span class="card-section-title">ЕЖЕДНЕВНЫЕ РИТУАЛЫ</span>
+            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Новая привычка</button>
+          </div>
+
+          <div id="habits-list-container" class="habits-list">
+            <!-- Dynamically populated habits -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ЛИЧНОЕ (PERSONAL) -->
+      <section id="tab-personal" class="tab-screen">
+        <!-- Sub nav -->
+        <div class="sub-nav-pills">
+          <button class="pill-btn active" data-personaltab="workouts">Тренировки</button>
+          <button class="pill-btn" data-personaltab="books">Книги</button>
+          <button class="pill-btn" data-personaltab="body">Внешность</button>
+        </div>
+
+        <!-- Subscreen: Workouts -->
+        <div id="personal-subtab-workouts" class="personal-subscreen active">
+          <div class="glass-card">
+            <div class="card-section-title">ТРЕНИРОВКИ</div>
+            <div id="workouts-empty-state" class="empty-box">
+              <p>Нет тренировок. Добавь первую ниже.</p>
+            </div>
+            <button class="btn-outline-dashed" onclick="openAddWorkoutModal()">+ Добавить тренировку</button>
+          </div>
+
+          <div class="glass-card mt-16">
+            <div class="card-section-title">ИСТОРИЯ</div>
+            <div id="workout-history-container" class="empty-box">
+              <p>История пустая. Нажми плюс у программы после тренировки.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscreen: Books -->
+        <div id="personal-subtab-books" class="personal-subscreen">
+          <div class="glass-card">
+            <div class="card-section-title">ЧТЕНИЕ & КНИГИ</div>
+            <div id="books-list-container" class="empty-box">
+              <p>Пока нет добавленных книг.</p>
+            </div>
+            <button class="btn-outline-dashed" onclick="openAddBookModal()">+ Добавить книгу</button>
+          </div>
+        </div>
+
+        <!-- Subscreen: Body -->
+        <div id="personal-subtab-body" class="personal-subscreen">
+          <div class="glass-card">
+            <div class="card-section-title">ПАРАМЕТРЫ ТЕЛА</div>
+            <div class="body-stats-form">
+              <div class="input-group">
+                <label>Текущий вес (кг)</label>
+                <input type="number" id="input-weight" placeholder="75.0" step="0.1">
+              </div>
+              <div class="input-group">
+                <label>Целевой вес (кг)</label>
+                <input type="number" id="input-target-weight" placeholder="70.0" step="0.1">
+              </div>
+              <button class="btn-primary-sm" onclick="saveBodyStats()">Сохранить замер</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: НАСТРОЙКИ (SETTINGS) -->
+      <section id="tab-settings" class="tab-screen">
+        <!-- User Profile Card -->
+        <div class="glass-card profile-card">
+          <div class="profile-avatar-large">
+            <span id="profile-avatar-char-lg">S</span>
+          </div>
+          <div class="profile-username" id="profile-username-display">@username</div>
+          <div class="profile-badges-row">
+            <span class="badge-free">✦ Free</span>
+            <button class="badge-theme-select" id="theme-selector-btn">Emerald ›</button>
+          </div>
+        </div>
+
+        <!-- Settings Group -->
+        <div class="settings-list">
+          <div class="settings-card">
+            <div class="settings-item">
+              <div class="settings-left">
+                <div class="settings-icon">🏠</div>
+                <div>
+                  <div class="settings-title">Экран при открытии</div>
+                  <div class="settings-sub">Сегодня</div>
+                </div>
+              </div>
+              <span class="settings-arrow">∨</span>
+            </div>
+
+            <div class="settings-item">
+              <div class="settings-left">
+                <div class="settings-icon">🇷🇺</div>
+                <div>
+                  <div class="settings-title">Язык интерфейса</div>
+                  <div class="settings-sub">Русский</div>
+                </div>
+              </div>
+              <span class="settings-arrow">∨</span>
+            </div>
+          </div>
+
+          <div class="settings-card mt-16">
+            <button class="btn-danger-full" onclick="resetAllAppData()">Сбросить данные приложения</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="today">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        </div>
+        <span class="nav-label">Сегодня</span>
+      </button>
+
+      <button class="nav-item" data-tab="nutrition">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20.25c4.556 0 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75 3.75 7.444 3.75 12s3.694 8.25 8.25 8.25z"></path><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+        </div>
+        <span class="nav-label">Питание</span>
+      </button>
+
+      <button class="nav-item" data-tab="path">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path></svg>
+        </div>
+        <span class="nav-label">Путь</span>
+      </button>
+
+      <button class="nav-item" data-tab="personal">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <span class="nav-label">Личное</span>
+      </button>
+
+      <button class="nav-item" data-tab="settings">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </div>
+        <span class="nav-label">Настройки</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Shared Modal Window -->
+  <div id="app-modal" class="modal-backdrop">
+    <div class="modal-window glass-modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Заголовок</h3>
+        <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body">
+        <!-- Content dynamically injected -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
