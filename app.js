@@ -1,17 +1,12 @@
-/* SENSE Telegram Mini App — Client Logic */
+/* SENSE 2.0 Telegram Mini App — Client Logic & Health Calculator */
 
-// Telegram WebApp Initialization
 const tg = window.Telegram?.WebApp || null;
 
 if (tg) {
   tg.ready();
   tg.expand();
-  if (tg.enableClosingConfirmation) {
-    tg.enableClosingConfirmation();
-  }
 }
 
-// Helper: Haptic Feedback
 function triggerHaptic(type = 'light') {
   if (tg && tg.HapticFeedback) {
     if (type === 'light') tg.HapticFeedback.impactOccurred('light');
@@ -20,51 +15,65 @@ function triggerHaptic(type = 'light') {
   }
 }
 
-// Initial State Data
+// Default Initial State
 const DEFAULT_STATE = {
-  streak: 1,
-  waterGoal: 2.9, // Liters
+  onboarded: false,
+  userProfile: {
+    name: '',
+    gender: 'male',
+    age: 25,
+    height: 178,
+    weight: 75,
+    goal: 'loss', // 'loss', 'maintain', 'gain'
+    activity: 1.2
+  },
+  calculatedTargets: {
+    calories: 2100,
+    waterGoal: 2.6,
+    p: 150,
+    f: 75,
+    c: 200,
+    fib: 30
+  },
   waterCurrent: 0.0,
-  calorieGoal: 2661,
-  macrosGoal: { p: 140, f: 80, c: 300, fib: 30 },
+  streak: 1,
   meals: {
     'Завтрак': [],
     'Обед': [],
-    'Ужин': [],
-    'Перекус': []
+    'Ужин': []
   },
-  habits: [
-    { id: 1, title: 'Утренняя зарядка / Разминка', completed: false, streak: 3 },
-    { id: 2, title: 'Выпить 2.5л+ воды', completed: false, streak: 5 },
-    { id: 3, title: 'Чтение книги (20+ мин)', completed: false, streak: 2 },
-    { id: 4, title: 'Соблюдение КБЖУ', completed: false, streak: 1 }
+  journal: [
+    { id: 1, tag: '💡 Идея', content: 'Дисциплина — это выбор между тем, чего ты хочешь прямо сейчас, и тем, чего ты хочешь больше всего.', date: '28 Июля', mood: '⚡' }
   ],
-  notes: [],
-  sleepTime: '23:00',
-  workouts: [],
-  books: [],
-  bodyStats: { weight: 75.0, targetWeight: 70.0 }
+  habits: [
+    { id: 1, title: 'Утренняя разминка (10 мин)', completed: false, streak: 4 },
+    { id: 2, title: 'Выпить норму воды', completed: false, streak: 6 },
+    { id: 3, title: 'Записать мысль в дневник SENSE', completed: false, streak: 2 }
+  ]
 };
 
-// Load State from LocalStorage
-let appState = JSON.parse(localStorage.getItem('SENSE_APP_DATA')) || DEFAULT_STATE;
+let appState = JSON.parse(localStorage.getItem('SENSE_APP_DATA_V2')) || DEFAULT_STATE;
 
 function saveState() {
-  localStorage.setItem('SENSE_APP_DATA', JSON.stringify(appState));
+  localStorage.setItem('SENSE_APP_DATA_V2', JSON.stringify(appState));
   renderAll();
 }
 
-// DOM Elements
 document.addEventListener('DOMContentLoaded', () => {
   initTelegramUser();
   setupNavigation();
-  setupSubTabs();
+
+  if (!appState.onboarded) {
+    document.getElementById('onboarding-modal').style.display = 'flex';
+  } else {
+    document.getElementById('onboarding-modal').style.display = 'none';
+  }
+
   renderAll();
 });
 
-// Setup Telegram User Info
 function initTelegramUser() {
-  const username = tg?.initDataUnsafe?.user?.username || tg?.initDataUnsafe?.user?.first_name || 'ProtocolUser';
+  const username = tg?.initDataUnsafe?.user?.first_name || appState.userProfile.name || 'Друг';
   const firstLetter = username.charAt(0).toUpperCase();
 
   const userAvatarChar = document.getElementById('user-avatar-char');
@@ -75,7 +84,6 @@ function initTelegramUser() {
   if (profileAvatarCharLg) profileAvatarCharLg.textContent = firstLetter;
   if (profileUsernameDisplay) profileUsernameDisplay.textContent = `@${username}`;
 
-  // Current Date display
   const dateBadge = document.getElementById('current-date-badge');
   if (dateBadge) {
     const now = new Date();
@@ -84,7 +92,99 @@ function initTelegramUser() {
   }
 }
 
-// Navigation between 5 main tabs
+// 🧮 Health Target Calculator
+function calculateHealthTargets(profile) {
+  const { gender, age, height, weight, goal, activity } = profile;
+
+  let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+  if (gender === 'male') {
+    bmr += 5;
+  } else {
+    bmr -= 161;
+  }
+
+  let tdee = bmr * activity;
+  let calories = Math.round(tdee);
+  let p = Math.round(weight * 2.0);
+  let f = Math.round(weight * 0.9);
+
+  if (goal === 'loss') {
+    calories = Math.round(tdee * 0.85); // 15% Deficit
+  } else if (goal === 'gain') {
+    calories = Math.round(tdee * 1.15); // 15% Surplus for Muscle Mass
+    p = Math.round(weight * 2.2);       // High protein for hypertrophy
+    f = Math.round(weight * 1.0);
+  }
+
+  const remainingCalories = calories - (p * 4) - (f * 9);
+  const c = Math.max(50, Math.round(remainingCalories / 4));
+
+  const waterGoal = Number((weight * 0.035).toFixed(1));
+
+  return { calories, waterGoal, p, f, c, fib: 30 };
+}
+
+let tempProfile = { ...DEFAULT_STATE.userProfile };
+
+function selectGender(gender) {
+  tempProfile.gender = gender;
+  document.getElementById('gender-male').classList.toggle('selected', gender === 'male');
+  document.getElementById('gender-female').classList.toggle('selected', gender === 'female');
+  triggerHaptic('light');
+}
+
+function selectGoal(goal) {
+  tempProfile.goal = goal;
+  const btnLoss = document.getElementById('goal-weightloss');
+  const btnMaintain = document.getElementById('goal-maintain');
+  const btnGain = document.getElementById('goal-gain');
+
+  if (btnLoss) btnLoss.classList.toggle('selected', goal === 'loss');
+  if (btnMaintain) btnMaintain.classList.toggle('selected', goal === 'maintain');
+  if (btnGain) btnGain.classList.toggle('selected', goal === 'gain');
+
+  triggerHaptic('light');
+}
+
+function selectActivity(activity) {
+  tempProfile.activity = activity;
+  document.getElementById('act-low').classList.toggle('selected', activity === 1.2);
+  document.getElementById('act-mid').classList.toggle('selected', activity === 1.45);
+  triggerHaptic('light');
+}
+
+function nextOnboardingStep(step) {
+  if (step === 2) {
+    const nameInput = document.getElementById('onboard-name').value.trim();
+    if (nameInput) tempProfile.name = nameInput;
+  }
+
+  document.querySelectorAll('.onboarding-step').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById(`onboard-step-${step}`);
+  if (target) target.classList.add('active');
+  triggerHaptic('light');
+}
+
+function finishOnboarding() {
+  tempProfile.age = Number(document.getElementById('onboard-age').value) || 25;
+  tempProfile.height = Number(document.getElementById('onboard-height').value) || 178;
+  tempProfile.weight = Number(document.getElementById('onboard-weight').value) || 75;
+
+  appState.userProfile = tempProfile;
+  appState.calculatedTargets = calculateHealthTargets(tempProfile);
+  appState.onboarded = true;
+
+  document.getElementById('onboarding-modal').style.display = 'none';
+  triggerHaptic('success');
+  saveState();
+}
+
+function openOnboardingAgain() {
+  document.getElementById('onboarding-modal').style.display = 'flex';
+  document.querySelectorAll('.onboarding-step').forEach(el => el.classList.remove('active'));
+  document.getElementById('onboard-step-1').classList.add('active');
+}
+
 function setupNavigation() {
   const navButtons = document.querySelectorAll('.bottom-nav .nav-item');
   navButtons.forEach(btn => {
@@ -97,12 +197,10 @@ function setupNavigation() {
 }
 
 function switchTab(tabId) {
-  // Update nav buttons active state
   document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
   });
 
-  // Update tab screens
   document.querySelectorAll('.tab-screen').forEach(screen => {
     screen.classList.remove('active');
   });
@@ -113,82 +211,14 @@ function switchTab(tabId) {
   }
 }
 
-// Setup Sub-tabs (Personal / Today)
-function setupSubTabs() {
-  // Personal Subtabs
-  const personalBtns = document.querySelectorAll('#tab-personal .sub-nav-pills .pill-btn');
-  personalBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      personalBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const target = btn.getAttribute('data-personaltab');
-      document.querySelectorAll('.personal-subscreen').forEach(sub => sub.classList.remove('active'));
-      const activeSub = document.getElementById(`personal-subtab-${target}`);
-      if (activeSub) activeSub.classList.add('active');
-      triggerHaptic('light');
-    });
-  });
-}
-
-// RENDER FUNCTIONS
 function renderAll() {
   renderTodaySummary();
   renderNutrition();
+  renderWaterVessel();
+  renderJournal();
   renderHabits();
-  renderPersonal();
 }
 
-// 1. TODAY DASHBOARD SUMMARY
-function renderTodaySummary() {
-  // Calculate Habits %
-  const totalHabits = appState.habits.length;
-  const completedHabits = appState.habits.filter(h => h.completed).length;
-  const habitsPercent = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
-
-  // Calculate KBJU %
-  const totalLoggedCalories = getLoggedCalories();
-  const kbjuPercent = Math.min(100, Math.round((totalLoggedCalories / appState.calorieGoal) * 100));
-
-  // Calculate Water %
-  const waterPercent = Math.min(100, Math.round((appState.waterCurrent / appState.waterGoal) * 100));
-
-  // Workout %
-  const workoutPercent = appState.workouts.length > 0 ? 100 : 0;
-
-  // Overall Average
-  const overall = Math.round((habitsPercent + kbjuPercent + waterPercent + workoutPercent) / 4);
-
-  // Update UI Text
-  document.getElementById('val-tasks-percent').textContent = `${habitsPercent}%`;
-  document.getElementById('val-kbju-percent').textContent = `${kbjuPercent}%`;
-  document.getElementById('val-water-percent').textContent = `${waterPercent}%`;
-  document.getElementById('val-workout-percent').textContent = `${workoutPercent}%`;
-  document.getElementById('overall-percentage').textContent = `${overall}%`;
-
-  // Update SVG Ring offset (circumference = 2 * PI * 42 = 263.89)
-  const ringBar = document.getElementById('overall-ring-bar');
-  if (ringBar) {
-    const strokeDashoffset = 264 - (264 * overall) / 100;
-    ringBar.style.strokeDashoffset = strokeDashoffset;
-  }
-
-  // Quick Notes display
-  const notesCount = document.getElementById('notes-count-display');
-  const notesSub = document.getElementById('notes-sub-display');
-  if (notesCount && notesSub) {
-    notesCount.textContent = appState.notes.length;
-    notesSub.textContent = appState.notes.length > 0 ? appState.notes[appState.notes.length - 1] : 'Пока пусто';
-  }
-
-  // Sleep time display
-  const sleepTimeDisplay = document.getElementById('sleep-time-display');
-  if (sleepTimeDisplay) {
-    sleepTimeDisplay.textContent = appState.sleepTime || '23:00';
-  }
-}
-
-// 2. NUTRITION TAB
 function getLoggedCalories() {
   let total = 0;
   Object.values(appState.meals).forEach(mealArray => {
@@ -210,19 +240,79 @@ function getLoggedMacros() {
   return { p, f, c, fib };
 }
 
-function renderNutrition() {
+function renderTodaySummary() {
+  const targets = appState.calculatedTargets;
   const loggedCal = getLoggedCalories();
-  document.getElementById('calories-logged-val').textContent = loggedCal;
-  document.getElementById('calories-goal-val').textContent = `из ${appState.calorieGoal}`;
 
-  // Calorie Ring (circumference = 2 * PI * 40 = 251.2)
+  const kbjuPercent = Math.min(100, Math.round((loggedCal / targets.calories) * 100));
+  const waterPercent = Math.min(100, Math.round((appState.waterCurrent / targets.waterGoal) * 100));
+
+  const totalHabits = appState.habits.length;
+  const completedHabits = appState.habits.filter(h => h.completed).length;
+  const habitsPercent = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
+
+  const overall = Math.round((habitsPercent + kbjuPercent + waterPercent) / 3);
+
+  document.getElementById('val-tasks-percent').textContent = `${habitsPercent}%`;
+  document.getElementById('val-kbju-percent').textContent = `${kbjuPercent}%`;
+  document.getElementById('val-water-percent').textContent = `${waterPercent}%`;
+  document.getElementById('val-journal-count').textContent = appState.journal.length;
+  document.getElementById('overall-percentage').textContent = `${overall}%`;
+
+  const ringBar = document.getElementById('overall-ring-bar');
+  if (ringBar) {
+    ringBar.style.strokeDashoffset = 264 - (264 * overall) / 100;
+  }
+}
+
+function renderWaterVessel() {
+  const goal = appState.calculatedTargets.waterGoal || 2.6;
+  const current = appState.waterCurrent || 0;
+  const pct = Math.min(100, Math.round((current / goal) * 100));
+
+  const waveBar = document.getElementById('liquid-wave-bar');
+  const currentText = document.getElementById('liquid-current-text');
+  const goalText = document.getElementById('liquid-goal-text');
+
+  if (waveBar) waveBar.style.height = `${pct}%`;
+  if (currentText) currentText.textContent = `${current.toFixed(1)} л`;
+  if (goalText) goalText.textContent = `из ${goal.toFixed(1)} л (${pct}%)`;
+}
+
+function addWater(amount) {
+  appState.waterCurrent += amount;
+  triggerHaptic('medium');
+  saveState();
+}
+
+function resetNutritionToday() {
+  appState.meals = { 'Завтрак': [], 'Обед': [], 'Ужин': [] };
+  appState.waterCurrent = 0.0;
+  triggerHaptic('success');
+  saveState();
+}
+
+function renderNutrition() {
+  const targets = appState.calculatedTargets;
+  const loggedCal = getLoggedCalories();
+
+  document.getElementById('calories-logged-val').textContent = loggedCal;
+  document.getElementById('calories-goal-val').textContent = `из ${targets.calories}`;
+
   const calBar = document.getElementById('calorie-ring-bar');
   if (calBar) {
-    const pct = Math.min(100, (loggedCal / appState.calorieGoal) * 100);
+    const pct = Math.min(100, (loggedCal / targets.calories) * 100);
     calBar.style.strokeDashoffset = 251.2 - (251.2 * pct) / 100;
   }
 
-  // Macros
+  const userGoalText = document.getElementById('user-goal-display-text');
+  if (userGoalText) {
+    let goalLabel = '🔥 Похудение';
+    if (appState.userProfile.goal === 'maintain') goalLabel = '⚖️ Баланс';
+    if (appState.userProfile.goal === 'gain') goalLabel = '🏋️‍♂️ Набор массы';
+    userGoalText.textContent = `Цель: ${goalLabel} (${appState.userProfile.weight} кг)`;
+  }
+
   const macros = getLoggedMacros();
   const updateMacro = (type, val, goal) => {
     const pct = Math.min(100, Math.round((val / goal) * 100));
@@ -231,17 +321,11 @@ function renderNutrition() {
     document.getElementById(`macro-${type}-bar`).style.width = `${pct}%`;
   };
 
-  updateMacro('p', macros.p, appState.macrosGoal.p);
-  updateMacro('f', macros.f, appState.macrosGoal.f);
-  updateMacro('c', macros.c, appState.macrosGoal.c);
-  updateMacro('fib', macros.fib, appState.macrosGoal.fib);
+  updateMacro('p', macros.p, targets.p);
+  updateMacro('f', macros.f, targets.f);
+  updateMacro('c', macros.c, targets.c);
+  updateMacro('fib', macros.fib, targets.fib);
 
-  // Water
-  document.getElementById('water-logged-val').textContent = appState.waterCurrent.toFixed(1);
-  document.getElementById('water-goal-val').textContent = appState.waterGoal.toFixed(1);
-  document.getElementById('water-logged-total').textContent = appState.waterCurrent.toFixed(1);
-
-  // Meals List Rendering
   const renderMealSection = (mealName, containerId) => {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -265,29 +349,62 @@ function renderNutrition() {
   renderMealSection('Завтрак', 'meal-items-breakfast');
   renderMealSection('Обед', 'meal-items-lunch');
   renderMealSection('Ужин', 'meal-items-dinner');
-  renderMealSection('Перекус', 'meal-items-snack');
 }
 
-function addWater(amount) {
-  appState.waterCurrent += amount;
-  triggerHaptic('medium');
-  saveState();
+function renderJournal() {
+  const container = document.getElementById('journal-feed-container');
+  if (!container) return;
+
+  if (appState.journal.length === 0) {
+    container.innerHTML = `<div class="empty-box">Дневник мыслей пуст. Нажмите "+ Написать инсайт".</div>`;
+    return;
+  }
+
+  container.innerHTML = appState.journal.map(entry => `
+    <div class="journal-card">
+      <div class="journal-meta">
+        <span class="journal-tag">${entry.tag} ${entry.mood || ''}</span>
+        <span class="journal-date">${entry.date}</span>
+      </div>
+      <div class="journal-content">${entry.content}</div>
+    </div>
+  `).join('');
 }
 
-function resetNutritionToday() {
-  appState.meals = { 'Завтрак': [], 'Обед': [], 'Ужин': [], 'Перекус': [] };
-  appState.waterCurrent = 0.0;
-  triggerHaptic('success');
-  saveState();
+function openAddJournalModal() {
+  document.getElementById('modal-title').textContent = 'Новый Инсайт / Заметка';
+  document.getElementById('modal-body').innerHTML = `
+    <select id="journal-input-tag" class="modal-input">
+      <option value="💡 Идея">💡 Идея / Озарение</option>
+      <option value="📚 Обучение">📚 Чему сегодня научился</option>
+      <option value="🧠 Заметка">🧠 Мысль дня</option>
+      <option value="🎯 Урок">🎯 Важный вывод</option>
+    </select>
+    <textarea id="journal-input-content" class="modal-input" rows="4" placeholder="Запишите вашу мысль или изученный материал..."></textarea>
+    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveJournalFromModal()">Сохранить в дневник</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
 }
 
-// 3. HABITS / PATH TAB
+function saveJournalFromModal() {
+  const tag = document.getElementById('journal-input-tag').value;
+  const content = document.getElementById('journal-input-content').value.trim();
+  const date = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+  if (content) {
+    appState.journal.unshift({ id: Date.now(), tag, content, date, mood: '✨' });
+    triggerHaptic('success');
+    saveState();
+    closeModal();
+  }
+}
+
 function renderHabits() {
   const container = document.getElementById('habits-list-container');
   if (!container) return;
 
   if (appState.habits.length === 0) {
-    container.innerHTML = `<div class="empty-box">Нет привычек. Нажмите "+ Новая привычка" выше.</div>`;
+    container.innerHTML = `<div class="empty-box">Нет привычек. Нажмите "+ Новая привычка".</div>`;
     return;
   }
 
@@ -313,62 +430,19 @@ function toggleHabit(id) {
   }
 }
 
-// 4. PERSONAL TAB
-function renderPersonal() {
-  // Workouts
-  const workoutsEmpty = document.getElementById('workouts-empty-state');
-  if (workoutsEmpty) {
-    if (appState.workouts.length > 0) {
-      workoutsEmpty.innerHTML = appState.workouts.map(w => `
-        <div class="food-item-row">
-          <div><strong>${w.title}</strong> — ${w.duration} мин</div>
-          <div class="food-meta">${w.date}</div>
-        </div>
-      `).join('');
-    } else {
-      workoutsEmpty.innerHTML = `<p>Нет тренировок. Добавь первую ниже.</p>`;
-    }
-  }
-}
-
-// MODAL CONTROLS
-function closeModal() {
-  const modal = document.getElementById('app-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function openNoteModal() {
-  document.getElementById('modal-title').textContent = 'Новая заметка';
+function openAddHabitModal() {
+  document.getElementById('modal-title').textContent = 'Новая привычка';
   document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="input-modal-note" class="modal-input" placeholder="Введите текст заметки..." autofocus />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveNoteFromModal()">Сохранить</button>
+    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название (напр., Чтение 20 мин)" />
+    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать</button>
   `;
   document.getElementById('app-modal').classList.add('active');
 }
 
-function saveNoteFromModal() {
-  const text = document.getElementById('input-modal-note').value.trim();
-  if (text) {
-    appState.notes.push(text);
-    triggerHaptic('success');
-    saveState();
-    closeModal();
-  }
-}
-
-function openSleepModal() {
-  document.getElementById('modal-title').textContent = 'Время отхода ко сну';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="time" id="input-modal-sleep" class="modal-input" value="${appState.sleepTime || '23:00'}" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveSleepFromModal()">Сохранить</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveSleepFromModal() {
-  const val = document.getElementById('input-modal-sleep').value;
-  if (val) {
-    appState.sleepTime = val;
+function saveHabitFromModal() {
+  const title = document.getElementById('habit-input-title').value.trim();
+  if (title) {
+    appState.habits.push({ id: Date.now(), title, completed: false, streak: 1 });
     triggerHaptic('success');
     saveState();
     closeModal();
@@ -378,7 +452,7 @@ function saveSleepFromModal() {
 function openAddFoodModal(mealName) {
   document.getElementById('modal-title').textContent = `Добавить в ${mealName}`;
   document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="food-input-name" class="modal-input" placeholder="Название блюда (напр., Овсянка)" />
+    <input type="text" id="food-input-name" class="modal-input" placeholder="Название блюда (напр., Курица с рисом)" />
     <input type="number" id="food-input-cal" class="modal-input" placeholder="Калории (ккал)" />
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
       <input type="number" id="food-input-p" class="modal-input" placeholder="Белки (г)" />
@@ -409,49 +483,14 @@ function removeFoodItem(mealName, index) {
   saveState();
 }
 
-function openAddHabitModal() {
-  document.getElementById('modal-title').textContent = 'Новая привычка';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название (напр., Медитация)" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveHabitFromModal() {
-  const title = document.getElementById('habit-input-title').value.trim();
-  if (title) {
-    appState.habits.push({ id: Date.now(), title, completed: false, streak: 1 });
-    triggerHaptic('success');
-    saveState();
-    closeModal();
-  }
-}
-
-function openAddWorkoutModal() {
-  document.getElementById('modal-title').textContent = 'Записать тренировку';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="workout-input-title" class="modal-input" placeholder="Вид (напр., Силовая / Бег)" />
-    <input type="number" id="workout-input-dur" class="modal-input" placeholder="Длительность (минуты)" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveWorkoutFromModal()">Записать</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveWorkoutFromModal() {
-  const title = document.getElementById('workout-input-title').value.trim() || 'Тренировка';
-  const duration = Number(document.getElementById('workout-input-dur').value) || 45;
-  const date = new Date().toLocaleDateString('ru-RU');
-
-  appState.workouts.push({ title, duration, date });
-  triggerHaptic('success');
-  saveState();
-  closeModal();
+function closeModal() {
+  const modal = document.getElementById('app-modal');
+  if (modal) modal.classList.remove('active');
 }
 
 function resetAllAppData() {
-  if (confirm('Сбросить все сохраненные данные SENSE?')) {
-    localStorage.removeItem('SENSE_APP_DATA');
+  if (confirm('Сбросить все сохраненные данные SENSE 2.0?')) {
+    localStorage.removeItem('SENSE_APP_DATA_V2');
     appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
     saveState();
     triggerHaptic('success');
