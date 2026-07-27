@@ -77,7 +77,7 @@
   </div>
 
   <div id="app-container" class="app-container">
-    <!-- Top Header Bar -->
+    <!-- Header -->
     <header class="header">
       <div class="header-brand">
         <span class="brand-status-dot"></span>
@@ -100,7 +100,7 @@
           <span id="streak-count">1</span>
         </div>
 
-        <div id="user-avatar" class="user-avatar-chip" onclick="openProfileModal()">
+        <div id="user-avatar" class="user-avatar-chip" onclick="openOnboardingAgain()">
           <span id="user-avatar-char">S</span>
         </div>
       </div>
@@ -108,17 +108,16 @@
 
     <main id="main-content" class="main-content">
       
-      <!-- TAB 1: СЕГОДНЯ (DASHBOARD) -->
+      <!-- TAB 1: СЕГОДНЯ -->
       <section id="tab-today" class="tab-screen active">
         <div class="sub-nav-pills">
-          <button class="pill-btn active" data-subtab="today">Сегодня</button>
-          <button class="pill-btn" onclick="openOnboardingAgain()">Перерасчет КБЖУ</button>
+          <button class="pill-btn active" data-subtab="today">Обзор Главной</button>
+          <button class="pill-btn" onclick="openOnboardingAgain()">⚙️ Перерасчет КБЖУ</button>
         </div>
 
-        <!-- Summary Grid -->
+        <!-- 1. Overall Progress Ring -->
         <div class="summary-card-container">
-          <div class="summary-card-header">СВОДКА ДНЯ & КБЖУ</div>
-          
+          <div class="summary-card-header">СВОДКА УСПЕХА ЗА ДЕНЬ</div>
           <div class="summary-grid">
             <div class="center-progress-badge">
               <svg class="ring-svg" viewBox="0 0 100 100">
@@ -157,7 +156,96 @@
           </div>
         </div>
 
-        <!-- Sleep Tracker Card -->
+        <!-- 2. Checklist Card -->
+        <div class="glass-card">
+          <div class="glass-card-top-bar">
+            <span class="card-section-title">☑️ ЧЕК-ЛИСТ РИТУАЛОВ И УХОДА ЗА СОБОЙ</span>
+            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Ритуал</button>
+          </div>
+          <div id="today-habits-checklist-container" class="habits-list">
+            <!-- Dynamically populated habits -->
+          </div>
+        </div>
+
+        <!-- 3. Dynamic Charts Analytics Container (NEW!) -->
+        <div class="chart-card-box">
+          <div class="chart-header">
+            <span class="card-section-title">📊 ДИНАМИКА И ГРАФИКИ (7 ДНЕЙ)</span>
+            <button class="btn-text-ghost" onclick="logNewWeightModal()">+ Замер веса</button>
+          </div>
+
+          <!-- Weight Chart -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 8px;">⚖️ График Веса (кг)</div>
+            <div id="weight-chart-bars" class="chart-bars-wrapper">
+              <!-- Dynamically populated weight bars -->
+            </div>
+          </div>
+
+          <!-- Water Chart -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--aqua-primary); margin-bottom: 8px;">💧 График Воды (литры)</div>
+            <div id="water-chart-bars" class="chart-bars-wrapper">
+              <!-- Dynamically populated water bars -->
+            </div>
+          </div>
+
+          <!-- Sleep Chart -->
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #d8b4fe; margin-bottom: 8px;">🌙 График Сна (часы)</div>
+            <div id="sleep-chart-bars" class="chart-bars-wrapper">
+              <!-- Dynamically populated sleep bars -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Explicit Target KBJU Card -->
+        <div class="glass-card">
+          <div class="kbju-card-header">
+            <div>
+              <div class="card-section-title">📊 ТВОЯ ИНДИВИДУАЛЬНАЯ НОРМА КБЖУ</div>
+              <div id="home-user-goal-text" style="font-weight: 800; color: #fff; font-size: 14px; margin-top: 2px;">Норма: 2255 ккал/день</div>
+            </div>
+          </div>
+
+          <div class="kbju-overview-row">
+            <div class="calorie-ring-box">
+              <svg viewBox="0 0 100 100" class="ring-svg">
+                <circle class="ring-bg" cx="50" cy="50" r="40"></circle>
+                <circle id="calorie-ring-bar" class="ring-bar" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+              </svg>
+              <div class="calorie-ring-text">
+                <span id="calories-logged-val" class="cal-num">0</span>
+                <span id="calories-goal-val" class="cal-sub">из 2255</span>
+              </div>
+            </div>
+
+            <div class="macros-grid">
+              <div class="macro-item">
+                <div class="macro-label">Б <span id="macro-p-percent" class="macro-pct">0%</span></div>
+                <div id="macro-p-gram" class="macro-gram">0 / 150г</div>
+                <div class="macro-progress"><div id="macro-p-bar" class="bar-fill emerald" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">Ж <span id="macro-f-percent" class="macro-pct">0%</span></div>
+                <div id="macro-f-gram" class="macro-gram">0 / 67г</div>
+                <div class="macro-progress"><div id="macro-f-bar" class="bar-fill yellow" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">У <span id="macro-c-percent" class="macro-pct">0%</span></div>
+                <div id="macro-c-gram" class="macro-gram">0 / 230г</div>
+                <div class="macro-progress"><div id="macro-c-bar" class="bar-fill cyan" style="width: 0%"></div></div>
+              </div>
+              <div class="macro-item">
+                <div class="macro-label">К <span id="macro-fib-percent" class="macro-pct">0%</span></div>
+                <div id="macro-fib-gram" class="macro-gram">0 / 30г</div>
+                <div class="macro-progress"><div id="macro-fib-bar" class="bar-fill purple" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Sleep Tracker Card -->
         <div class="sleep-tracker-card">
           <div class="sleep-header">
             <span class="card-section-title">🌙 ТРЕКЕР СНА & ВОССТАНОВЛЕНИЯ</span>
@@ -196,11 +284,11 @@
 
           <div class="sleep-advice-box">
             <div class="advice-title">💡 Совет по улучшению сна:</div>
-            <div id="sleep-advice-text">Отличная продолжительность! Старайтесь за 1 час до сна отключать экраны телефонов для максимальной вырабатываемости мелатонина.</div>
+            <div id="sleep-advice-text">Отличная продолжительность! Старайтесь проветривать спальню перед сном и засыпать в полной темноте.</div>
           </div>
         </div>
 
-        <!-- Water Vessel Card -->
+        <!-- 6. Water Vessel Card -->
         <div class="water-wave-container">
           <div class="card-section-title">ИНТЕРАКТИВНЫЙ БАЛАНС ВОДЫ</div>
           <div class="liquid-vessel">
@@ -222,53 +310,7 @@
       <section id="tab-nutrition" class="tab-screen">
         <div class="section-heading">
           <h2>Питание & КБЖУ</h2>
-          <p>Индивидуальный расчет под ваши габариты и цель.</p>
-        </div>
-
-        <div class="glass-card">
-          <div class="kbju-card-header">
-            <div>
-              <div class="card-section-title">РАСЧЕТ КБЖУ</div>
-              <div id="user-goal-display-text" style="font-weight: 700;">Цель: Похудение</div>
-            </div>
-            <button class="btn-text-ghost" onclick="resetNutritionToday()">Сбросить день</button>
-          </div>
-
-          <div class="kbju-overview-row">
-            <div class="calorie-ring-box">
-              <svg viewBox="0 0 100 100" class="ring-svg">
-                <circle class="ring-bg" cx="50" cy="50" r="40"></circle>
-                <circle id="calorie-ring-bar" class="ring-bar" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="calorie-ring-text">
-                <span id="calories-logged-val" class="cal-num">0</span>
-                <span id="calories-goal-val" class="cal-sub">из 2100</span>
-              </div>
-            </div>
-
-            <div class="macros-grid">
-              <div class="macro-item">
-                <div class="macro-label">Б <span id="macro-p-percent" class="macro-pct">0%</span></div>
-                <div id="macro-p-gram" class="macro-gram">0г</div>
-                <div class="macro-progress"><div id="macro-p-bar" class="bar-fill emerald" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">Ж <span id="macro-f-percent" class="macro-pct">0%</span></div>
-                <div id="macro-f-gram" class="macro-gram">0г</div>
-                <div class="macro-progress"><div id="macro-f-bar" class="bar-fill yellow" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">У <span id="macro-c-percent" class="macro-pct">0%</span></div>
-                <div id="macro-c-gram" class="macro-gram">0г</div>
-                <div class="macro-progress"><div id="macro-c-bar" class="bar-fill cyan" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">К <span id="macro-fib-percent" class="macro-pct">0%</span></div>
-                <div id="macro-fib-gram" class="macro-gram">0г</div>
-                <div class="macro-progress"><div id="macro-fib-bar" class="bar-fill purple" style="width: 0%"></div></div>
-              </div>
-            </div>
-          </div>
+          <p>Дневник приемов пищи и подсчет съеденного.</p>
         </div>
 
         <div class="meals-list">
@@ -323,7 +365,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: PATH (HABITS & SELF CARE) -->
+      <!-- TAB 4: PATH -->
       <section id="tab-path" class="tab-screen">
         <div class="section-heading">
           <h2>Привычки & Уход за собой</h2>
@@ -337,7 +379,7 @@
           </div>
 
           <div id="habits-list-container" class="habits-list">
-            <!-- Dynamically populated habits -->
+            <!-- Dynamically populated -->
           </div>
         </div>
       </section>

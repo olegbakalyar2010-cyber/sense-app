@@ -47,6 +47,13 @@ const DEFAULT_STATE = {
     'Обед': [],
     'Ужин': []
   },
+  // 7-day Historical Data Arrays for Charts
+  historyData: {
+    days: ['Ср', 'Чт', 'Пт', 'Сб', 'Вс', 'Пн', 'Сг'],
+    weight: [76.5, 76.2, 75.8, 75.5, 75.3, 75.1, 75.0],
+    water: [1.8, 2.1, 2.5, 2.6, 2.2, 2.6, 1.5],
+    sleep: [6.5, 7.0, 7.5, 8.0, 6.8, 7.5, 7.5]
+  },
   journal: [
     { id: 1, tag: '💡 Идея', content: 'Дисциплина — это выбор между тем, чего ты хочешь прямо сейчас, и тем, чего ты хочешь больше всего.', date: '28 Июля', mood: '⚡' }
   ],
@@ -221,6 +228,7 @@ function renderAll() {
   renderSleepTracker();
   renderJournal();
   renderHabits();
+  renderCharts();
 }
 
 function getLoggedCalories() {
@@ -244,7 +252,7 @@ function getLoggedMacros() {
   return { p, f, c, fib };
 }
 
-// 1. TODAY DASHBOARD
+// TODAY DASHBOARD SUMMARY
 function renderTodaySummary() {
   const targets = appState.calculatedTargets || { calories: 2255, waterGoal: 2.6 };
   const loggedCal = getLoggedCalories();
@@ -268,9 +276,109 @@ function renderTodaySummary() {
   if (ringBar) {
     ringBar.style.strokeDashoffset = 264 - (264 * overall) / 100;
   }
+
+  const homeGoalText = document.getElementById('home-user-goal-text');
+  if (homeGoalText) {
+    let goalLabel = '🔥 Похудение';
+    if (appState.userProfile.goal === 'maintain') goalLabel = '⚖️ Баланс';
+    if (appState.userProfile.goal === 'gain') goalLabel = '🏋️‍♂️ Набор массы';
+    homeGoalText.textContent = `Цель: ${goalLabel} (${appState.userProfile.weight}кг • ${targets.calories} ккал/день)`;
+  }
 }
 
-// 2. SLEEP TRACKER
+// DYNAMIC CHARTS RENDERER (WEIGHT, WATER, SLEEP)
+function renderCharts() {
+  if (!appState.historyData) {
+    appState.historyData = {
+      days: ['Ср', 'Чт', 'Пт', 'Сб', 'Вс', 'Пн', 'Сг'],
+      weight: [76.5, 76.2, 75.8, 75.5, 75.3, 75.1, 75.0],
+      water: [1.8, 2.1, 2.5, 2.6, 2.2, 2.6, 1.5],
+      sleep: [6.5, 7.0, 7.5, 8.0, 6.8, 7.5, 7.5]
+    };
+  }
+
+  // Sync today's current values into the last index
+  appState.historyData.weight[6] = appState.userProfile.weight;
+  appState.historyData.water[6] = Number(appState.waterCurrent.toFixed(1));
+  if (appState.sleepData) {
+    appState.historyData.sleep[6] = calculateSleepHours(appState.sleepData.bedtime, appState.sleepData.waketime);
+  }
+
+  const { days, weight, water, sleep } = appState.historyData;
+
+  // Render Weight Chart
+  const weightContainer = document.getElementById('weight-chart-bars');
+  if (weightContainer) {
+    const maxW = Math.max(...weight, 80);
+    const minW = Math.min(...weight, 60);
+    weightContainer.innerHTML = days.map((day, i) => {
+      const val = weight[i];
+      const heightPct = Math.max(20, Math.round(((val - minW + 5) / (maxW - minW + 10)) * 100));
+      return `
+        <div class="bar-col emerald">
+          <div class="bar-val-text">${val}</div>
+          <div class="bar-pill-fill" style="height: ${heightPct}%;"></div>
+          <div class="bar-label-day">${day}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Render Water Chart
+  const waterContainer = document.getElementById('water-chart-bars');
+  if (waterContainer) {
+    const goalW = appState.calculatedTargets.waterGoal || 2.6;
+    waterContainer.innerHTML = days.map((day, i) => {
+      const val = water[i];
+      const heightPct = Math.min(100, Math.max(15, Math.round((val / goalW) * 100)));
+      return `
+        <div class="bar-col">
+          <div class="bar-val-text">${val}L</div>
+          <div class="bar-pill-fill" style="height: ${heightPct}%;"></div>
+          <div class="bar-label-day">${day}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Render Sleep Chart
+  const sleepContainer = document.getElementById('sleep-chart-bars');
+  if (sleepContainer) {
+    sleepContainer.innerHTML = days.map((day, i) => {
+      const val = sleep[i];
+      const heightPct = Math.min(100, Math.max(15, Math.round((val / 10) * 100)));
+      return `
+        <div class="bar-col purple">
+          <div class="bar-val-text">${val}ч</div>
+          <div class="bar-pill-fill" style="height: ${heightPct}%;"></div>
+          <div class="bar-label-day">${day}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function logNewWeightModal() {
+  document.getElementById('modal-title').textContent = 'Записать замер веса';
+  document.getElementById('modal-body').innerHTML = `
+    <input type="number" id="input-new-weight-val" class="modal-input" placeholder="${appState.userProfile.weight}" step="0.1" />
+    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveNewWeightFromModal()">Сохранить замер</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function saveNewWeightFromModal() {
+  const newW = Number(document.getElementById('input-new-weight-val').value);
+  if (newW > 30) {
+    appState.userProfile.weight = newW;
+    appState.calculatedTargets = calculateHealthTargets(appState.userProfile);
+    triggerHaptic('success');
+    saveState();
+    closeModal();
+  }
+}
+
+// SLEEP TRACKER
 function calculateSleepHours(bedtime, waketime) {
   const [bH, bM] = bedtime.split(':').map(Number);
   const [wH, wM] = waketime.split(':').map(Number);
@@ -339,7 +447,7 @@ function selectSleepRating(rating) {
   saveState();
 }
 
-// 3. WATER VESSEL
+// WATER VESSEL
 function renderWaterVessel() {
   const goal = appState.calculatedTargets.waterGoal || 2.6;
   const current = appState.waterCurrent || 0;
@@ -367,7 +475,7 @@ function resetNutritionToday() {
   saveState();
 }
 
-// 4. NUTRITION SCREEN (WITH EXPLICIT TARGET GRAMS & CALORIES DISPLAY)
+// NUTRITION SCREEN
 function renderNutrition() {
   const targets = appState.calculatedTargets || { calories: 2255, p: 150, f: 67, c: 230, fib: 30 };
   const loggedCal = getLoggedCalories();
@@ -393,7 +501,6 @@ function renderNutrition() {
   const updateMacro = (type, val, targetVal) => {
     const pct = Math.min(100, Math.round((val / targetVal) * 100));
     document.getElementById(`macro-${type}-percent`).textContent = `${pct}%`;
-    // Explicitly show logged vs target grams (e.g. 0 / 150г)
     document.getElementById(`macro-${type}-gram`).textContent = `${val} / ${targetVal}г`;
     document.getElementById(`macro-${type}-bar`).style.width = `${pct}%`;
   };
@@ -428,7 +535,7 @@ function renderNutrition() {
   renderMealSection('Ужин', 'meal-items-dinner');
 }
 
-// 5. JOURNAL
+// JOURNAL
 function renderJournal() {
   const container = document.getElementById('journal-feed-container');
   if (!container) return;
@@ -477,26 +584,26 @@ function saveJournalFromModal() {
   }
 }
 
-// 6. HABITS & SELF-CARE RITUALS (CHECKLIST)
+// HABITS & RITUALS
 function renderHabits() {
-  const container = document.getElementById('habits-list-container');
-  if (!container) return;
-
-  if (appState.habits.length === 0) {
-    container.innerHTML = `<div class="empty-box">Нет ритуалов. Нажмите "+ Свой ритуал".</div>`;
-    return;
-  }
-
-  container.innerHTML = appState.habits.map(habit => `
-    <div class="habit-card-item ${habit.completed ? 'completed' : ''}" onclick="toggleHabit(${habit.id})">
-      <div class="habit-left">
-        <span class="habit-icon-emoji">${habit.icon || '✨'}</span>
-        <div class="habit-checkbox">${habit.completed ? '✓' : ''}</div>
-        <div class="habit-title">${habit.title}</div>
+  const html = appState.habits.length === 0 
+    ? `<div class="empty-box">Нет ритуалов. Нажмите "+ Свой ритуал".</div>`
+    : appState.habits.map(habit => `
+      <div class="habit-card-item ${habit.completed ? 'completed' : ''}" onclick="toggleHabit(${habit.id})">
+        <div class="habit-left">
+          <span class="habit-icon-emoji">${habit.icon || '✨'}</span>
+          <div class="habit-checkbox">${habit.completed ? '✓' : ''}</div>
+          <div class="habit-title">${habit.title}</div>
+        </div>
+        <div class="habit-streak-badge">⚡ ${habit.streak}дн</div>
       </div>
-      <div class="habit-streak-badge">⚡ ${habit.streak}дн</div>
-    </div>
-  `).join('');
+    `).join('');
+
+  const containerPath = document.getElementById('habits-list-container');
+  const containerToday = document.getElementById('today-habits-checklist-container');
+
+  if (containerPath) containerPath.innerHTML = html;
+  if (containerToday) containerToday.innerHTML = html;
 }
 
 function toggleHabit(id) {
