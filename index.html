@@ -23,6 +23,9 @@
         <div class="ceo-meta">
           <span id="user-ceo-name" class="ceo-name">Hamster CEO</span>
           <span id="user-league-badge" class="league-badge">🏆 Grandmaster ›</span>
+          <div class="league-progress-container">
+            <div id="league-progress-bar" class="league-progress-bar"></div>
+          </div>
         </div>
       </div>
 
@@ -86,10 +89,6 @@
           </div>
 
           <div style="display: flex; gap: 8px;">
-            <button class="boost-rocket-btn" style="background: rgba(255,255,255,0.08); color: #fff;" onclick="openPuzzleMiniGameModal()">
-              🎮 Игра
-            </button>
-
             <button class="boost-rocket-btn" onclick="openBoostsModal()">
               🚀 Boost
             </button>
@@ -127,7 +126,50 @@
         </div>
       </section>
 
-      <!-- TAB 3: FRIENDS (REFERRALS) -->
+      <!-- TAB 3: PLAYGROUND (MINI GAMES) -->
+      <section id="tab-playground" class="tab-screen">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="font-size: 22px; font-weight: 900; color: #fff;">Playground</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Играйте в игры и получайте ценные ключи 🗝️</p>
+        </div>
+
+        <div class="task-item-card" onclick="playMiniGame()">
+          <div class="task-left">
+            <span class="task-icon" style="font-size: 32px;">🕯️</span>
+            <div>
+              <div class="task-title">Головоломка (Свечи)</div>
+              <div class="task-reward">Награда: 1 Золотой Ключ 🗝️</div>
+            </div>
+          </div>
+          <button class="btn-claim-task">Играть</button>
+        </div>
+
+        <div class="task-item-card" onclick="alert('Hexa Puzzle в разработке!')">
+          <div class="task-left">
+            <span class="task-icon" style="font-size: 32px;">🛑</span>
+            <div>
+              <div class="task-title">Hexa Puzzle</div>
+              <div class="task-reward">Награда: Монеты 🪙</div>
+            </div>
+          </div>
+          <button class="btn-claim-task">Играть</button>
+        </div>
+
+        <div style="font-size: 14px; font-weight: 800; color: #fff; margin: 16px 0 10px 0;">Игры от партнеров</div>
+
+        <div class="task-item-card" onclick="alert('Partner Game 1 в разработке!')">
+          <div class="task-left">
+            <span class="task-icon" style="font-size: 32px;">🚴</span>
+            <div>
+              <div class="task-title">Ride City</div>
+              <div class="task-reward">Награда: До 4 ключей 🗝️</div>
+            </div>
+          </div>
+          <button class="btn-claim-task">Играть</button>
+        </div>
+      </section>
+
+      <!-- TAB 4: FRIENDS (REFERRALS) -->
       <section id="tab-friends" class="tab-screen">
         <div style="text-align: center; margin-bottom: 20px;">
           <h2 style="font-size: 22px; font-weight: 900; color: #fff;">Пригласи друзей!</h2>
@@ -269,6 +311,11 @@
       <button class="nav-item" data-tab="mine" onclick="switchTab('mine')">
         <div class="nav-icon-emoji">⛏️</div>
         <span class="nav-label">Mine</span>
+      </button>
+
+      <button class="nav-item" data-tab="playground" onclick="switchTab('playground')">
+        <div class="nav-icon-emoji">🎮</div>
+        <span class="nav-label">Playground</span>
       </button>
 
       <button class="nav-item" data-tab="friends" onclick="switchTab('friends')">

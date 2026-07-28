@@ -17,17 +17,17 @@ function triggerHaptic(type = 'light') {
 
 // Leagues Thresholds
 const LEAGUES = [
-  { name: 'Bronze 🥉', min: 0 },
-  { name: 'Silver 🥈', min: 5000 },
-  { name: 'Gold 🥇', min: 25000 },
-  { name: 'Platinum 💎', min: 100000 },
-  { name: 'Diamond 💍', min: 1000000 },
-  { name: 'Epic ⚡', min: 2000000 },
-  { name: 'Legendary 👑', min: 10000000 },
-  { name: 'Master 🔮', min: 50000000 },
-  { name: 'Grandmaster 🏆', min: 100000000 },
-  { name: 'Lord 👑✨', min: 500000000 },
-  { name: 'Creator 🌟', min: 1000000000 }
+  { name: 'Bronze 🥉', min: 0, img: 'hamster_bronze.jpg' },
+  { name: 'Silver 🥈', min: 5000, img: 'hamster_silver.jpg' },
+  { name: 'Gold 🥇', min: 25000, img: 'hamster_gold.jpg' },
+  { name: 'Platinum 💎', min: 100000, img: 'hamster_platinum.jpg' },
+  { name: 'Diamond 💍', min: 1000000, img: 'hamster_diamond.jpg' },
+  { name: 'Epic ⚡', min: 2000000, img: 'hamster_epic.jpg' },
+  { name: 'Legendary 👑', min: 10000000, img: 'hamster_legendary.jpg' },
+  { name: 'Master 🔮', min: 50000000, img: 'hamster_master.jpg' },
+  { name: 'Grandmaster 🏆', min: 100000000, img: 'hamster_grandmaster.jpg' },
+  { name: 'Lord 👑✨', min: 500000000, img: 'hamster_lord.jpg' },
+  { name: 'Creator 🌟', min: 1000000000, img: 'hamster_lord.jpg' }
 ];
 
 // Mining Cards Database
@@ -176,6 +176,23 @@ function updateLeagueDisplay() {
   if (coinsLvlEl) {
     coinsLvlEl.textContent = nextLeague ? formatNum(nextLeague.min) : 'MAX';
   }
+
+  const hamsterImg = document.querySelector('.hamster-img');
+  if (hamsterImg && currentLeague.img) {
+    hamsterImg.src = currentLeague.img;
+  }
+
+  const progressBar = document.getElementById('league-progress-bar');
+  if (progressBar) {
+    if (!nextLeague) {
+      progressBar.style.width = '100%';
+    } else {
+      const currentMin = currentLeague.min;
+      const nextMin = nextLeague.min;
+      const progress = Math.max(0, Math.min(100, ((gameState.balance - currentMin) / (nextMin - currentMin)) * 100));
+      progressBar.style.width = `${progress}%`;
+    }
+  }
 }
 
 // TAPPER ENGINE WITH FLOATING NUMBERS
@@ -187,23 +204,23 @@ function setupTapperEvents() {
     e.preventDefault();
     tapPressStartTime = Date.now();
 
-    // Check Energy
-    if (gameState.energy < gameState.earnPerTap) {
-      triggerHaptic('medium');
-      return;
-    }
+    const touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
+    
+    touches.forEach(touch => {
+      if (gameState.energy < gameState.earnPerTap) {
+        triggerHaptic('medium');
+        return;
+      }
 
-    // Deduct Energy & Add Coins
-    gameState.energy = Math.max(0, gameState.energy - gameState.earnPerTap);
-    gameState.balance += gameState.earnPerTap;
-    triggerHaptic('light');
+      gameState.energy = Math.max(0, gameState.energy - gameState.earnPerTap);
+      gameState.balance += gameState.earnPerTap;
+      triggerHaptic('light');
+
+      createFloatingNumber(touch.clientX, touch.clientY, `+${gameState.earnPerTap}`);
+    });
 
     updateBalanceDisplay();
     updateEnergyDisplay();
-
-    // Create Floating Number Animation at click touch point
-    const touch = e.touches ? e.touches[0] : e;
-    createFloatingNumber(touch.clientX, touch.clientY, `+${gameState.earnPerTap}`);
   };
 
   const handleEnd = (e) => {
@@ -458,19 +475,7 @@ function selectExchange(name, logo) {
   closeModal();
 }
 
-// MINI-GAME PUZZLE MODAL
-function openPuzzleMiniGameModal() {
-  document.getElementById('modal-title').textContent = '🎮 Головоломка Свечей (Ключ 🗝️)';
-  document.getElementById('modal-body').innerHTML = `
-    <div style="text-align: center; padding: 10px;">
-      <div style="font-size: 48px;">🗝️</div>
-      <div style="font-size: 15px; font-weight: 800; color: #fff; margin-top: 6px;">Секретная игра за Ключ!</div>
-      <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Передвинь японские свечи трейдинга и выведи ключ наружу за 30 секунд!</p>
-    </div>
-    <button class="btn-connect-wallet" onclick="playMiniGame()">Начать игру 🚀</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
+
 
 function playMiniGame() {
   gameState.keys += 1;
