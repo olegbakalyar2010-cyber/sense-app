@@ -3,436 +3,292 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PROTOCOL — Life OS</title>
+  <title>Hamster Kombat — CEO Crypto Exchange Game</title>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-emerald">
-  <div class="app-background">
-    <div class="bg-grid"></div>
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
-    <div class="crystal-particle c-1"></div>
-    <div class="crystal-particle c-2"></div>
-    <div class="crystal-particle c-3"></div>
-  </div>
-
+<body>
   <div id="app-container" class="app-container">
-    <!-- Header -->
+    
+    <!-- Top Header: CEO Info & Sponsor Exchange -->
     <header class="header">
-      <div class="header-brand">
-        <span class="brand-status-dot"></span>
-        <h1 class="brand-title">PROTOCOL</h1>
-        <span id="current-date-badge" class="date-badge">Вт, 28 Июля</span>
-      </div>
-
-      <div class="header-stats">
-        <button class="icon-chip" title="Заметки" onclick="openNotesListModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-          </svg>
-        </button>
-
-        <button class="icon-chip" title="Идеи" onclick="openIdeasListModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18h6"></path><path d="M10 22h4"></path>
-            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.62 2.95 1.63 3.99.64.67 1.11 1.42 1.37 2.41"></path>
-          </svg>
-        </button>
-
-        <div class="streak-chip">
-          <span>🔥</span>
-          <span id="streak-count">1</span>
-        </div>
-
-        <div id="user-avatar" class="user-avatar-chip" onclick="switchTab('settings')">
-          <span id="user-avatar-char">P</span>
+      <div class="user-ceo-info">
+        <div class="ceo-avatar-badge">🐹</div>
+        <div class="ceo-meta">
+          <span id="user-ceo-name" class="ceo-name">Hamster CEO</span>
+          <span id="user-league-badge" class="league-badge">🏆 Grandmaster ›</span>
         </div>
       </div>
+
+      <button class="exchange-select-btn" onclick="openExchangeModal()">
+        <span id="selected-exchange-logo">🏦</span>
+        <span id="selected-exchange-name">Binance</span>
+      </button>
     </header>
+
+    <!-- Top 3 Stats Grid: Earn per tap | Coins to level | Profit per hour -->
+    <div class="top-stats-grid">
+      <div class="stat-box" onclick="handleTapStatClick()" title="Тройной клик включает Шифр Морзе!">
+        <span class="stat-label">Earn per tap</span>
+        <span id="stat-earn-per-tap" class="stat-val gold">+1</span>
+      </div>
+
+      <div class="stat-box" onclick="switchTab('mine')">
+        <span class="stat-label">Coins to lvl</span>
+        <span id="stat-coins-to-lvl" class="stat-val">10.0M</span>
+      </div>
+
+      <div class="stat-box" onclick="switchTab('mine')">
+        <span class="stat-label">Profit per hour</span>
+        <span id="stat-profit-per-hour" class="stat-val green">+1.25K 🪙</span>
+      </div>
+    </div>
 
     <main id="main-content" class="main-content">
       
-      <!-- TAB 1: СЕГОДНЯ (PROTOCOL HOMEPAGE) -->
-      <section id="tab-today" class="tab-screen active">
-        <div class="sub-nav-pills">
-          <button class="pill-btn active" id="subtab-btn-today" onclick="switchSubTab('today')">Сегодня</button>
-          <button class="pill-btn" id="subtab-btn-history" onclick="switchSubTab('history')">История</button>
-          <button class="pill-btn highlight" onclick="closeTodaySummaryModal()">Закрыть день</button>
+      <!-- TAB 1: EXCHANGE (MAIN TAPPER) -->
+      <section id="tab-exchange" class="tab-screen active">
+        
+        <!-- Secret Morse Cipher Box (Appears when triple-tapped) -->
+        <div id="morse-cipher-card" class="morse-cipher-card" style="display: none;">
+          <div class="morse-cipher-title">🔴 ЕЖЕДНЕВНЫЙ ШИФР МОРЗЕ (1,000,000 🪙)</div>
+          <div id="morse-display-code" class="morse-display-code">• • •</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Короткий клик = точка (•), Косой/Долгий = тире (-)</div>
         </div>
 
-        <!-- History Archive View (Hidden by default) -->
-        <div id="today-history-view" style="display: none;">
-          <div class="glass-card">
-            <div class="card-section-title">📜 АРХИВ ПРОШЛЫХ ДНЕЙ</div>
-            <div class="history-days-list">
-              <div class="history-item-row" onclick="viewHistoryDay('27.07')">
-                <div>
-                  <div style="font-weight: 700; color: #fff;">27 Июля</div>
-                  <div style="font-size: 11px; color: var(--text-muted);">КБЖУ: 2150 ккал • Вода: 2.5л • Ритуалы: 5/5</div>
-                </div>
-                <span class="history-badge-success">Успех ✓</span>
-              </div>
-              <div class="history-item-row" onclick="viewHistoryDay('26.07')">
-                <div>
-                  <div style="font-weight: 700; color: #fff;">26 Июля</div>
-                  <div style="font-size: 11px; color: var(--text-muted);">КБЖУ: 2400 ккал • Вода: 2.8л • Ритуалы: 4/5</div>
-                </div>
-                <span class="history-badge-success">Успех ✓</span>
-              </div>
-            </div>
+        <!-- Balance Counter -->
+        <div class="balance-display-container">
+          <span class="balance-title">TOTAL BALANCE</span>
+          <div class="balance-counter">
+            <div class="coin-icon-lg">🪙</div>
+            <span id="total-balance-num">1,234,567</span>
           </div>
         </div>
 
-        <!-- Today Main Summary View -->
-        <div id="today-main-view">
-          <!-- Quad Grid Summary Card (Exact Protocol Layout) -->
-          <div class="summary-card-container">
-            <div class="summary-card-header">СВОДКА</div>
-            <div class="summary-grid">
-              <div class="center-progress-badge">
-                <svg class="ring-svg" viewBox="0 0 100 100">
-                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-                  <circle id="overall-ring-bar" class="ring-bar" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
-                </svg>
-                <div class="ring-content">
-                  <span id="overall-percentage" class="ring-val">0%</span>
-                  <span class="ring-label">СВОДКА</span>
-                </div>
-              </div>
+        <!-- Central Interactive Hamster Mascot Tapper -->
+        <div class="hamster-tapper-wrapper">
+          <button id="hamster-tapper-btn" class="hamster-tapper-btn">
+            <img src="hamster_ceo.png" alt="Hamster CEO" class="hamster-img" />
+          </button>
+        </div>
 
-              <div class="summary-card card-tasks" onclick="switchTab('path')">
-                <div class="card-title">ДЕЛА</div>
-                <div id="val-tasks-percent" class="card-value">0%</div>
-              </div>
-
-              <div class="summary-card card-kbju" onclick="switchTab('nutrition')">
-                <div class="card-title">КБЖУ</div>
-                <div id="val-kbju-percent" class="card-value">0%</div>
-              </div>
-
-              <div class="summary-card card-workouts" onclick="switchTab('personal')">
-                <div class="card-title">ТРЕНИРОВКИ</div>
-                <div id="val-workouts-percent" class="card-value">0%</div>
-              </div>
-
-              <div class="summary-card card-water" onclick="switchTab('nutrition')">
-                <div class="card-title">ВОДА</div>
-                <div id="val-water-percent" class="card-value">0%</div>
-              </div>
-            </div>
+        <!-- Energy & Boost Rocket Bar -->
+        <div class="tapper-footer-bar">
+          <div class="energy-display">
+            <span class="energy-icon">⚡</span>
+            <span id="energy-counter-text" class="energy-text">1500 / 1500</span>
           </div>
 
-          <!-- Lower Quick Action Cards (Notes & Sleep) -->
-          <div class="quick-action-cards-grid">
-            <div class="quick-card-item" onclick="openNotesListModal()">
-              <div class="quick-card-title">
-                <span>📝 ЗАМЕТКИ</span>
-                <span id="home-notes-count-badge" class="quick-badge">0</span>
-              </div>
-              <div class="quick-card-sub" id="home-notes-subtitle">Пока пусто</div>
-            </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="boost-rocket-btn" style="background: rgba(255,255,255,0.08); color: #fff;" onclick="openPuzzleMiniGameModal()">
+              🎮 Игра
+            </button>
 
-            <div class="quick-card-item" onclick="openSleepModal()">
-              <div class="quick-card-title">
-                <span>🌙 СОН</span>
-                <span id="home-sleep-time-badge" class="quick-badge">23:00</span>
-              </div>
-              <div class="quick-card-sub" id="home-sleep-status-sub">Записать прошлую ночь</div>
-            </div>
+            <button class="boost-rocket-btn" onclick="openBoostsModal()">
+              🚀 Boost
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- TAB 2: ПИТАНИЕ (NUTRITION DIARY & WATER) -->
-      <section id="tab-nutrition" class="tab-screen">
-        <div class="section-heading">
-          <h2>Питание</h2>
-          <p>Дневник питания, вода и быстрые добавления.</p>
+      <!-- TAB 2: MINE (CARDS & DAILY COMBO) -->
+      <section id="tab-mine" class="tab-screen">
+        <!-- Daily Combo Banner (5,000,000 Coins) -->
+        <div class="daily-combo-container">
+          <div class="combo-header">
+            <span class="combo-title">DAILY COMBO</span>
+            <span id="combo-reward-text" class="combo-reward-badge">+5,000,000 🪙</span>
+          </div>
+          <div class="combo-slots-grid">
+            <div id="combo-slot-1" class="combo-slot">?</div>
+            <div id="combo-slot-2" class="combo-slot">?</div>
+            <div id="combo-slot-3" class="combo-slot">?</div>
+          </div>
         </div>
 
-        <!-- Date Strip Bar -->
-        <div class="date-scroll-strip">
-          <div class="date-strip-item" onclick="selectNutritionDate('24.07', this)">24.07</div>
-          <div class="date-strip-item" onclick="selectNutritionDate('25.07', this)">25.07</div>
-          <div class="date-strip-item" onclick="selectNutritionDate('26.07', this)">26.07</div>
-          <div class="date-strip-item" onclick="selectNutritionDate('27.07', this)">27.07</div>
-          <div class="date-strip-item active" onclick="selectNutritionDate('Сегодня', this)">Сегодня</div>
-          <div class="date-strip-item" onclick="selectNutritionDate('Месяц', this)">Месяц</div>
+        <!-- Mine Sub-Categories Pills -->
+        <div class="mine-categories-pills">
+          <button class="category-pill-btn active" onclick="switchMineCategory('markets', this)">Markets</button>
+          <button class="category-pill-btn" onclick="switchMineCategory('pr', this)">PR & Team</button>
+          <button class="category-pill-btn" onclick="switchMineCategory('legal', this)">Legal</button>
+          <button class="category-pill-btn" onclick="switchMineCategory('web3', this)">Web3</button>
+          <button class="category-pill-btn" onclick="switchMineCategory('specials', this)">Specials</button>
         </div>
 
-        <!-- KBJU Card -->
-        <div class="glass-card">
-          <div class="kbju-card-header">
+        <!-- Mine Cards Grid -->
+        <div id="mine-cards-grid" class="mine-cards-grid">
+          <!-- Dynamically populated cards -->
+        </div>
+      </section>
+
+      <!-- TAB 3: FRIENDS (REFERRALS) -->
+      <section id="tab-friends" class="tab-screen">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="font-size: 22px; font-weight: 900; color: #fff;">Пригласи друзей!</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Получай бонусы за каждого приглашенного друга и его прокачку.</p>
+        </div>
+
+        <div class="task-item-card" onclick="copyReferralLink()">
+          <div class="task-left">
+            <span class="task-icon">🤝</span>
             <div>
-              <div class="card-section-title">КБЖУ</div>
-              <div id="calories-left-text" style="font-size: 16px; font-weight: 800; color: #fff; margin-top: 2px;">Осталось 2661 ккал</div>
-            </div>
-            <button class="btn-text-ghost" onclick="resetNutritionToday()">Сбросить</button>
-          </div>
-
-          <div class="kbju-overview-row">
-            <div class="calorie-ring-box">
-              <svg viewBox="0 0 100 100" class="ring-svg">
-                <circle class="ring-bg" cx="50" cy="50" r="40"></circle>
-                <circle id="calorie-ring-bar" class="ring-bar" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="calorie-ring-text">
-                <span id="calories-logged-val" class="cal-num">0</span>
-                <span id="calories-goal-val" class="cal-sub">из 2661</span>
-              </div>
-            </div>
-
-            <div class="macros-grid">
-              <div class="macro-item">
-                <div class="macro-label">Б <span id="macro-p-percent" class="macro-pct">0%</span></div>
-                <div class="macro-progress"><div id="macro-p-bar" class="bar-fill emerald" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">Ж <span id="macro-f-percent" class="macro-pct">0%</span></div>
-                <div class="macro-progress"><div id="macro-f-bar" class="bar-fill yellow" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">У <span id="macro-c-percent" class="macro-pct">0%</span></div>
-                <div class="macro-progress"><div id="macro-c-bar" class="bar-fill cyan" style="width: 0%"></div></div>
-              </div>
-              <div class="macro-item">
-                <div class="macro-label">К <span id="macro-fib-percent" class="macro-pct">0%</span></div>
-                <div class="macro-progress"><div id="macro-fib-bar" class="bar-fill purple" style="width: 0%"></div></div>
-              </div>
+              <div class="task-title">Пригласить друга</div>
+              <div class="task-reward">+5,000 🪙 для тебя и друга</div>
             </div>
           </div>
         </div>
 
-        <!-- Drinks / Water Accordion -->
-        <div class="glass-card water-accordion-card">
-          <div class="water-accordion-header" onclick="toggleWaterAccordion()">
+        <div class="task-item-card" onclick="copyReferralLink()">
+          <div class="task-left">
+            <span class="task-icon">⭐</span>
             <div>
-              <div class="card-section-title">💧 НАПИТКИ / ВОДА</div>
-              <div id="water-summary-text" style="font-size: 13px; font-weight: 700; color: #fff; margin-top: 2px;">0.0 / 2.9 л • Жидкости всего 0.0 л</div>
-            </div>
-            <div class="accordion-arrow" id="water-accordion-arrow">▼</div>
-          </div>
-
-          <div id="water-accordion-body" class="water-accordion-body">
-            <div class="water-quick-btns">
-              <button class="btn-water-action" onclick="addWater(0.25)">+250 мл 💧</button>
-              <button class="btn-water-action" onclick="addWater(0.5)">+500 мл 🧊</button>
-              <button class="btn-water-action" onclick="addWater(1.0)">+1.0 л 🌊</button>
-            </div>
-            <div class="water-quick-btns" style="margin-top: 6px;">
-              <button class="btn-water-action" onclick="addDrinkCustom('Кофе ☕', 0.2)">Кофе ☕</button>
-              <button class="btn-water-action" onclick="addDrinkCustom('Зеленый чай 🍵', 0.3)">Чай 🍵</button>
-              <button class="btn-water-action" onclick="addDrinkCustom('Протеин 🥛', 0.4)">Протеин 🥛</button>
+              <div class="task-title">Друг с Telegram Premium</div>
+              <div class="task-reward">+25,000 🪙 для тебя и друга</div>
             </div>
           </div>
         </div>
 
-        <!-- Meals List (Breakfast, Lunch, Dinner, Snack) -->
-        <div class="meals-list">
-          <div class="meal-block-card">
-            <div class="meal-block-header">
-              <span class="meal-title">Завтрак</span>
-              <button class="btn-plus-icon" onclick="openAddFoodModal('Завтрак')">+</button>
-            </div>
-            <div id="meal-items-breakfast" class="meal-items-container">
-              <span class="empty-hint">Нажми + чтобы добавить завтрак</span>
+        <div style="margin-top: 20px;">
+          <div style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 10px;">Список друзей (<span id="friends-count-val">0</span>)</div>
+          <div id="friends-list-container">
+            <div class="empty-box" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+              Вы еще никого не пригласили. Поделитесь ссылкой с друзьями!
             </div>
           </div>
+        </div>
 
-          <div class="meal-block-card">
-            <div class="meal-block-header">
-              <span class="meal-title">Обед</span>
-              <button class="btn-plus-icon" onclick="openAddFoodModal('Обед')">+</button>
-            </div>
-            <div id="meal-items-lunch" class="meal-items-container">
-              <span class="empty-hint">Нажми + чтобы добавить обед</span>
-            </div>
-          </div>
+        <button class="btn-connect-wallet" style="margin-top: 16px;" onclick="copyReferralLink()">
+          Пригласить друга 📤
+        </button>
+      </section>
 
-          <div class="meal-block-card">
-            <div class="meal-block-header">
-              <span class="meal-title">Ужин</span>
-              <button class="btn-plus-icon" onclick="openAddFoodModal('Ужин')">+</button>
-            </div>
-            <div id="meal-items-dinner" class="meal-items-container">
-              <span class="empty-hint">Нажми + чтобы добавить ужин</span>
-            </div>
-          </div>
+      <!-- TAB 4: EARN (DAILY TASKS & REWARDS) -->
+      <section id="tab-earn" class="tab-screen">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <h2 style="font-size: 22px; font-weight: 900; color: #fff;">Заработай больше монет</h2>
+        </div>
 
-          <div class="meal-block-card">
-            <div class="meal-block-header">
-              <span class="meal-title">Перекус</span>
-              <button class="btn-plus-icon" onclick="openAddFoodModal('Перекус')">+</button>
-            </div>
-            <div id="meal-items-snack" class="meal-items-container">
-              <span class="empty-hint">Нажми + чтобы добавить перекус</span>
+        <div class="task-item-card" onclick="openDailyRewardModal()">
+          <div class="task-left">
+            <span class="task-icon">📅</span>
+            <div>
+              <div class="task-title">Ежедневная награда</div>
+              <div class="task-reward">До +5,000,000 🪙 за 10 дней</div>
             </div>
           </div>
+          <button class="btn-claim-task">Забрать</button>
+        </div>
+
+        <div style="font-size: 14px; font-weight: 800; color: #fff; margin: 16px 0 10px 0;">Список заданий</div>
+
+        <div class="task-item-card" onclick="claimTaskReward('tg_channel', 10000)">
+          <div class="task-left">
+            <span class="task-icon">📢</span>
+            <div>
+              <div class="task-title">Подписаться на Telegram-канал</div>
+              <div class="task-reward">+10,000 🪙</div>
+            </div>
+          </div>
+          <button id="task-btn-tg_channel" class="btn-claim-task">Выполнить</button>
+        </div>
+
+        <div class="task-item-card" onclick="claimTaskReward('yt_video', 100000)">
+          <div class="task-left">
+            <span class="task-icon">▶️</span>
+            <div>
+              <div class="task-title">Посмотреть видео Hamster YouTube</div>
+              <div class="task-reward">+100,000 🪙</div>
+            </div>
+          </div>
+          <button id="task-btn-yt_video" class="btn-claim-task">Выполнить</button>
+        </div>
+
+        <div class="task-item-card" onclick="claimTaskReward('twitter', 15000)">
+          <div class="task-left">
+            <span class="task-icon">🐦</span>
+            <div>
+              <div class="task-title">Подписаться на Twitter (X)</div>
+              <div class="task-reward">+15,000 🪙</div>
+            </div>
+          </div>
+          <button id="task-btn-twitter" class="btn-claim-task">Выполнить</button>
         </div>
       </section>
 
-      <!-- TAB 3: ПУТЬ (PROTOCOL HABITS & RITUALS) -->
-      <section id="tab-path" class="tab-screen">
-        <div class="section-heading">
-          <h2>Путь</h2>
-          <p>Ежедневные привычки, дисциплина и стрики.</p>
+      <!-- TAB 5: AIRDROP (WALLET CONNECT & HMSTR TOKEN) -->
+      <section id="tab-airdrop" class="tab-screen">
+        <div class="airdrop-card">
+          <div style="font-size: 42px; margin-bottom: 8px;">💎</div>
+          <h2 style="font-size: 22px; font-weight: 900; color: #fff;">Airdrop $HMSTR</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+            Листинг токена $HMSTR приближается! Подключи свой TON-кошелек для получения аирдропа.
+          </p>
+
+          <button id="btn-wallet-connect" class="btn-connect-wallet" onclick="toggleWalletConnection()">
+            Connect TON wallet 💎
+          </button>
         </div>
 
-        <div class="glass-card">
-          <div class="glass-card-top-bar">
-            <span class="card-section-title">ЕЖЕДНЕВНЫЕ РИТУАЛЫ</span>
-            <button class="btn-primary-sm" onclick="openAddHabitModal()">+ Ритуал</button>
-          </div>
+        <div style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 10px;">Чек-лист аирдропа</div>
 
-          <div id="habits-list-container" class="habits-list">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: ЛИЧНОЕ (PERSONAL HUB: WORKOUTS, BOOKS, APPEARANCE) -->
-      <section id="tab-personal" class="tab-screen">
-        <div class="section-heading">
-          <h2>Личное</h2>
-          <p>Тренировки, книги и замеры тела.</p>
-        </div>
-
-        <div class="sub-nav-pills">
-          <button class="pill-btn active" id="personal-sub-workout" onclick="switchPersonalSubTab('workout')">🏋️‍♂️ Тренировки</button>
-          <button class="pill-btn" id="personal-sub-books" onclick="switchPersonalSubTab('books')">📚 Книги</button>
-          <button class="pill-btn" id="personal-sub-body" onclick="switchPersonalSubTab('body')">🪞 Внешность</button>
-        </div>
-
-        <!-- Personal Sub Tab 1: Workouts -->
-        <div id="personal-section-workout" class="personal-sub-content">
-          <div class="glass-card">
-            <div class="glass-card-top-bar">
-              <span class="card-section-title">ЖУРНАЛ ТРЕНИРОВОК</span>
-              <button class="btn-primary-sm" onclick="openAddWorkoutModal()">+ Тренировка</button>
-            </div>
-            <div id="workouts-list-container">
-              <div class="empty-box">Нет записей тренировок. Нажмите "+ Тренировка".</div>
+        <div class="task-item-card">
+          <div class="task-left">
+            <span class="task-icon">💎</span>
+            <div>
+              <div class="task-title">Подключен кошелек TON</div>
+              <div id="airdrop-wallet-status" class="task-reward">Не подключен</div>
             </div>
           </div>
         </div>
 
-        <!-- Personal Sub Tab 2: Books -->
-        <div id="personal-section-books" class="personal-sub-content" style="display: none;">
-          <div class="glass-card">
-            <div class="glass-card-top-bar">
-              <span class="card-section-title">СПИСОК КНИГ</span>
-              <button class="btn-primary-sm" onclick="openAddBookModal()">+ Добавить книгу</button>
+        <div class="task-item-card">
+          <div class="task-left">
+            <span class="task-icon">🔑</span>
+            <div>
+              <div class="task-title">Собрано золотых ключей</div>
+              <div id="airdrop-keys-status" class="task-reward">0 ключей</div>
             </div>
-            <div id="books-list-container">
-              <div class="empty-box">Список книг пуст. Нажмите "+ Добавить книгу".</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Personal Sub Tab 3: Body & Appearance -->
-        <div id="personal-section-body" class="personal-sub-content" style="display: none;">
-          <div class="glass-card">
-            <div class="glass-card-top-bar">
-              <span class="card-section-title">ПАРАМЕТРЫ ТЕЛА И ВЕС</span>
-              <button class="btn-primary-sm" onclick="openBodyMeasurementModal()">+ Замер тела</button>
-            </div>
-            <div id="body-measurements-container" style="padding: 10px 0;">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 5: НАСТРОЙКИ (SETTINGS & PROTOCOL PROFILE) -->
-      <section id="tab-settings" class="tab-screen">
-        <div class="glass-card profile-card">
-          <div class="profile-avatar-large">
-            <span id="profile-avatar-char-lg">P</span>
-          </div>
-          <div class="profile-username" id="profile-username-display">@username</div>
-          <div class="profile-badges-row">
-            <span class="badge-free">Free</span>
-            <button class="badge-theme-select">Тема: Green ></button>
-          </div>
-        </div>
-
-        <div class="settings-list">
-          <div class="settings-card">
-            <div class="settings-item">
-              <div class="settings-left">
-                <div>📱</div>
-                <div>
-                  <div class="settings-title">Экран при открытии</div>
-                  <div class="settings-sub">Сегодня</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="settings-item">
-              <div class="settings-left">
-                <div>🌐</div>
-                <div>
-                  <div class="settings-title">Язык</div>
-                  <div class="settings-sub">Русский</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-card mt-16">
-            <button class="btn-danger-full" onclick="resetAllAppData()">Сбросить данные Protocol</button>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Bottom Navigation Bar (5 Protocol Tabs) -->
+    <!-- Bottom Navigation Bar (5 Hamster Tabs) -->
     <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="today">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-        </div>
-        <span class="nav-label">Сегодня</span>
+      <button class="nav-item active" data-tab="exchange" onclick="switchTab('exchange')">
+        <div class="nav-icon-emoji">🪙</div>
+        <span class="nav-label">Exchange</span>
       </button>
 
-      <button class="nav-item" data-tab="nutrition">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20.25c4.556 0 8.25-3.694 8.25-8.25S16.556 3.75 12 3.75 3.75 7.444 3.75 12s3.694 8.25 8.25 8.25z"></path></svg>
-        </div>
-        <span class="nav-label">Питание</span>
+      <button class="nav-item" data-tab="mine" onclick="switchTab('mine')">
+        <div class="nav-icon-emoji">⛏️</div>
+        <span class="nav-label">Mine</span>
       </button>
 
-      <button class="nav-item" data-tab="path">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path></svg>
-        </div>
-        <span class="nav-label">Путь</span>
+      <button class="nav-item" data-tab="friends" onclick="switchTab('friends')">
+        <div class="nav-icon-emoji">👥</div>
+        <span class="nav-label">Friends</span>
       </button>
 
-      <button class="nav-item" data-tab="personal">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-        <span class="nav-label">Личное</span>
+      <button class="nav-item" data-tab="earn" onclick="switchTab('earn')">
+        <div class="nav-icon-emoji">💰</div>
+        <span class="nav-label">Earn</span>
       </button>
 
-      <button class="nav-item" data-tab="settings">
-        <div class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle></svg>
-        </div>
-        <span class="nav-label">Настройки</span>
+      <button class="nav-item" data-tab="airdrop" onclick="switchTab('airdrop')">
+        <div class="nav-icon-emoji">💎</div>
+        <span class="nav-label">Airdrop</span>
       </button>
     </nav>
   </div>
 
+  <!-- Global Modal Window -->
   <div id="app-modal" class="modal-backdrop">
     <div class="modal-window glass-modal">
       <div class="modal-header">

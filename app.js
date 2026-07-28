@@ -1,4 +1,4 @@
-/* PROTOCOL Life OS — Client Logic & Full Features (No AI) */
+/* HAMSTER KOMBAT — Full Client Game Engine (Summer 2024 Edition) */
 
 const tg = window.Telegram?.WebApp || null;
 
@@ -15,95 +15,262 @@ function triggerHaptic(type = 'light') {
   }
 }
 
-// State
+// Leagues Thresholds
+const LEAGUES = [
+  { name: 'Bronze 🥉', min: 0 },
+  { name: 'Silver 🥈', min: 5000 },
+  { name: 'Gold 🥇', min: 25000 },
+  { name: 'Platinum 💎', min: 100000 },
+  { name: 'Diamond 💍', min: 1000000 },
+  { name: 'Epic ⚡', min: 2000000 },
+  { name: 'Legendary 👑', min: 10000000 },
+  { name: 'Master 🔮', min: 50000000 },
+  { name: 'Grandmaster 🏆', min: 100000000 },
+  { name: 'Lord 👑✨', min: 500000000 },
+  { name: 'Creator 🌟', min: 1000000000 }
+];
+
+// Mining Cards Database
+const MINE_CARDS = [
+  // Markets
+  { id: 'margin_100', category: 'markets', icon: '📈', title: 'Margin trading x100', profit: 1200, cost: 3000, lvl: 1 },
+  { id: 'derivatives', category: 'markets', icon: '📊', title: 'Derivatives', profit: 800, cost: 2000, lvl: 1 },
+  { id: 'fan_tokens', category: 'markets', icon: '🪙', title: 'Fan tokens', profit: 500, cost: 1200, lvl: 1 },
+  { id: 'meme_coins', category: 'markets', icon: '🐸', title: 'Meme coins', profit: 1500, cost: 4500, lvl: 0 },
+  // PR & Team
+  { id: 'ceo_hamster', category: 'pr', icon: '👔', title: 'CEO Hamster', profit: 2500, cost: 8000, lvl: 1 },
+  { id: 'marketing', category: 'pr', icon: '📢', title: 'Marketing Team', profit: 900, cost: 2500, lvl: 1 },
+  { id: 'it_team', category: 'pr', icon: '💻', title: 'IT Infrastructure', profit: 1100, cost: 3200, lvl: 0 },
+  // Legal
+  { id: 'license_europe', category: 'legal', icon: '🇪🇺', title: 'License Europe', profit: 2000, cost: 6000, lvl: 0 },
+  { id: 'license_uae', category: 'legal', icon: '🇦🇪', title: 'License UAE', profit: 3500, cost: 10000, lvl: 0 },
+  { id: 'license_japan', category: 'legal', icon: '🇯🇵', title: 'License Japan', profit: 4000, cost: 12000, lvl: 0 },
+  // Web3
+  { id: 'dex_router', category: 'web3', icon: '🔄', title: 'DEX Router', profit: 1800, cost: 5000, lvl: 0 },
+  { id: 'oracle_network', category: 'web3', icon: '🔮', title: 'Oracle Network', profit: 2200, cost: 7000, lvl: 0 },
+  // Specials
+  { id: 'durov_interview', category: 'specials', icon: '✈️', title: 'Дуров в Карлсоне', profit: 8000, cost: 25000, lvl: 0 },
+  { id: 'btc_pizza', category: 'specials', icon: '🍕', title: 'Bitcoin Pizza Day', profit: 5000, cost: 15000, lvl: 0 }
+];
+
+// Initial Game State
 const DEFAULT_STATE = {
-  userProfile: {
-    name: 'Пользователь',
-    weight: 75.0,
-    waist: 82,
-    chest: 100,
-    biceps: 36,
-    caloriesGoal: 2661,
-    waterGoal: 2.9,
-    p: 160,
-    f: 75,
-    c: 320,
-    fib: 30
-  },
-  waterCurrent: 0.0,
-  drinksLog: [],
-  sleepData: {
-    bedtime: '23:00',
-    waketime: '06:30',
-    quality: 8
-  },
-  streak: 1,
-  meals: {
-    'Завтрак': [],
-    'Обед': [],
-    'Ужин': [],
-    'Перекус': []
-  },
-  notes: [],
-  ideas: [],
-  workouts: [],
-  books: [],
-  bodyLog: [
-    { date: '28 Июля', weight: 75.0, waist: 82, chest: 100, biceps: 36 }
-  ],
-  habits: [
-    { id: 1, icon: '💧', title: 'Питьевой режим (Вода)', completed: false, streak: 6 },
-    { id: 2, icon: '🏃‍♂️', title: 'Тренировка / Физ. активность', completed: false, streak: 4 },
-    { id: 3, icon: '🧴', title: 'Уход за собой (Self-Care)', completed: false, streak: 3 },
-    { id: 4, icon: '📖', title: 'Чтение книги (20+ мин)', completed: false, streak: 5 },
-    { id: 5, icon: '🤲', title: 'Духовный ритуал / Молитва', completed: false, streak: 7 }
-  ]
+  balance: 1234567,
+  profitPerHour: 1250,
+  earnPerTap: 1,
+  energy: 1500,
+  maxEnergy: 1500,
+  fullEnergyUses: 6,
+  multitapLvl: 1,
+  energyLimitLvl: 1,
+  keys: 0,
+  selectedExchange: 'Binance',
+  exchangeLogo: '🟡',
+  lastOnlineTimestamp: Date.now(),
+  cards: MINE_CARDS,
+  comboSolved: false,
+  comboCards: ['margin_100', 'ceo_hamster', 'durov_interview'],
+  foundCombo: [],
+  tasksDone: {},
+  walletConnected: false,
+  walletAddress: null
 };
 
-let appState = JSON.parse(localStorage.getItem('PROTOCOL_APP_DATA_V3')) || DEFAULT_STATE;
+let gameState = JSON.parse(localStorage.getItem('HAMSTER_KOMBAT_STATE_V1')) || DEFAULT_STATE;
 
-function saveState() {
-  localStorage.setItem('PROTOCOL_APP_DATA_V3', JSON.stringify(appState));
+// Daily Morse Code Cipher Word (e.g., "BTC")
+const DAILY_CIPHER = {
+  word: 'BTC',
+  morse: ['-', '.', '.', '.', '-', '.', '-.-.'] // B T C
+};
+let morseActive = false;
+let morseInput = '';
+let tapStatClickCount = 0;
+let tapStatTimer = null;
+let tapPressStartTime = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initGame();
+  setupTapperEvents();
+  startTimers();
+});
+
+function initGame() {
+  // Offline Passive Income Calculation (Up to 3 hours)
+  const now = Date.now();
+  const diffMs = now - (gameState.lastOnlineTimestamp || now);
+  const diffHours = Math.min(3, diffMs / (1000 * 60 * 60));
+
+  if (diffHours > 0.05 && gameState.profitPerHour > 0) {
+    const offlineEarned = Math.round((gameState.profitPerHour / 3600) * (diffHours * 3600));
+    gameState.balance += offlineEarned;
+    alert(`🎉 Пока тебя не было, твоя биржа заработала +${offlineEarned.toLocaleString()} 🪙 (за ${diffHours.toFixed(1)} ч)!`);
+  }
+  gameState.lastOnlineTimestamp = now;
+
   renderAll();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  initTelegramUser();
-  setupNavigation();
+function saveGameState() {
+  gameState.lastOnlineTimestamp = Date.now();
+  localStorage.setItem('HAMSTER_KOMBAT_STATE_V1', JSON.stringify(gameState));
   renderAll();
-});
+}
 
-function initTelegramUser() {
-  const username = tg?.initDataUnsafe?.user?.first_name || appState.userProfile.name || 'Друг';
-  const firstLetter = username.charAt(0).toUpperCase();
+function startTimers() {
+  // Passive income & Energy recharge timer every second
+  setInterval(() => {
+    // Energy Recharge (+3 per second)
+    if (gameState.energy < gameState.maxEnergy) {
+      gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 3);
+      updateEnergyDisplay();
+    }
 
-  const userAvatarChar = document.getElementById('user-avatar-char');
-  const profileAvatarCharLg = document.getElementById('profile-avatar-char-lg');
-  const profileUsernameDisplay = document.getElementById('profile-username-display');
+    // Passive Profit (+profit/3600 per second)
+    if (gameState.profitPerHour > 0) {
+      const perSec = gameState.profitPerHour / 3600;
+      gameState.balance += perSec;
+      updateBalanceDisplay();
+    }
+  }, 1000);
+}
 
-  if (userAvatarChar) userAvatarChar.textContent = firstLetter;
-  if (profileAvatarCharLg) profileAvatarCharLg.textContent = firstLetter;
-  if (profileUsernameDisplay) profileUsernameDisplay.textContent = `@${username}`;
+function renderAll() {
+  updateBalanceDisplay();
+  updateEnergyDisplay();
+  updateLeagueDisplay();
 
-  const dateBadge = document.getElementById('current-date-badge');
-  if (dateBadge) {
-    const now = new Date();
-    const options = { weekday: 'short', day: 'numeric', month: 'long' };
-    dateBadge.textContent = now.toLocaleDateString('ru-RU', options);
+  document.getElementById('stat-earn-per-tap').textContent = `+${gameState.earnPerTap}`;
+  document.getElementById('stat-profit-per-hour').textContent = `+${formatNum(gameState.profitPerHour)} 🪙`;
+  document.getElementById('selected-exchange-name').textContent = gameState.selectedExchange || 'Binance';
+  document.getElementById('selected-exchange-logo').textContent = gameState.exchangeLogo || '🏦';
+
+  renderMineCards();
+}
+
+function formatNum(num) {
+  num = Math.round(num);
+  if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+  if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+}
+
+function updateBalanceDisplay() {
+  const el = document.getElementById('total-balance-num');
+  if (el) el.textContent = Math.round(gameState.balance).toLocaleString();
+}
+
+function updateEnergyDisplay() {
+  const el = document.getElementById('energy-counter-text');
+  if (el) el.textContent = `${gameState.energy} / ${gameState.maxEnergy}`;
+}
+
+function updateLeagueDisplay() {
+  const currentLeague = LEAGUES.slice().reverse().find(l => gameState.balance >= l.min) || LEAGUES[0];
+  const leagueEl = document.getElementById('user-league-badge');
+  if (leagueEl) leagueEl.textContent = `🏆 ${currentLeague.name} ›`;
+
+  const nextLeague = LEAGUES.find(l => l.min > gameState.balance);
+  const coinsLvlEl = document.getElementById('stat-coins-to-lvl');
+  if (coinsLvlEl) {
+    coinsLvlEl.textContent = nextLeague ? formatNum(nextLeague.min) : 'MAX';
   }
 }
 
-function setupNavigation() {
-  const navButtons = document.querySelectorAll('.bottom-nav .nav-item');
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.getAttribute('data-tab');
-      switchTab(targetTab);
-      triggerHaptic('light');
-    });
-  });
+// TAPPER ENGINE WITH FLOATING NUMBERS
+function setupTapperEvents() {
+  const btn = document.getElementById('hamster-tapper-btn');
+  if (!btn) return;
+
+  const handleStart = (e) => {
+    e.preventDefault();
+    tapPressStartTime = Date.now();
+
+    // Check Energy
+    if (gameState.energy < gameState.earnPerTap) {
+      triggerHaptic('medium');
+      return;
+    }
+
+    // Deduct Energy & Add Coins
+    gameState.energy = Math.max(0, gameState.energy - gameState.earnPerTap);
+    gameState.balance += gameState.earnPerTap;
+    triggerHaptic('light');
+
+    updateBalanceDisplay();
+    updateEnergyDisplay();
+
+    // Create Floating Number Animation at click touch point
+    const touch = e.touches ? e.touches[0] : e;
+    createFloatingNumber(touch.clientX, touch.clientY, `+${gameState.earnPerTap}`);
+  };
+
+  const handleEnd = (e) => {
+    const pressDuration = Date.now() - tapPressStartTime;
+
+    // Handle Morse Cipher Input if Active
+    if (morseActive) {
+      const symbol = pressDuration > 220 ? '-' : '.';
+      morseInput += symbol;
+      document.getElementById('morse-display-code').textContent = morseInput;
+      checkMorseCode();
+    }
+  };
+
+  btn.addEventListener('touchstart', handleStart, { passive: false });
+  btn.addEventListener('touchend', handleEnd);
+  btn.addEventListener('mousedown', handleStart);
+  btn.addEventListener('mouseup', handleEnd);
 }
 
+function createFloatingNumber(x, y, text) {
+  const numEl = document.createElement('div');
+  numEl.className = 'floating-tap-num';
+  numEl.textContent = text;
+  numEl.style.left = `${x - 15}px`;
+  numEl.style.top = `${y - 40}px`;
+
+  document.body.appendChild(numEl);
+
+  setTimeout(() => {
+    numEl.remove();
+  }, 700);
+}
+
+// MORSE CIPHER TRIPLE CLICK TRIGGER
+function handleTapStatClick() {
+  tapStatClickCount++;
+  clearTimeout(tapStatTimer);
+
+  if (tapStatClickCount >= 3) {
+    morseActive = !morseActive;
+    tapStatClickCount = 0;
+    const card = document.getElementById('morse-cipher-card');
+    const tapperBtn = document.getElementById('hamster-tapper-btn');
+
+    if (card) card.style.display = morseActive ? 'block' : 'none';
+    if (tapperBtn) tapperBtn.classList.toggle('morse-active', morseActive);
+
+    triggerHaptic('success');
+    alert(morseActive ? '🔴 РЕЖИМ АЗБУКИ МОРЗЕ АКТИВИРОВАН! Короткий клик = (•), Долгий = (-)' : 'Шифр отключен');
+  }
+
+  tapStatTimer = setTimeout(() => { tapStatClickCount = 0; }, 600);
+}
+
+function checkMorseCode() {
+  if (morseInput === '...---...') { // Secret demo code
+    gameState.balance += 1000000;
+    triggerHaptic('success');
+    alert('🎉 СЕКРЕТНЫЙ ШИФР РАЗГАДАН! Получено +1,000,000 🪙!');
+    morseInput = '';
+    document.getElementById('morse-display-code').textContent = 'ВВЕДЕНО!';
+    saveGameState();
+  }
+}
+
+// TAB SWITCHING
 function switchTab(tabId) {
   document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
@@ -117,564 +284,247 @@ function switchTab(tabId) {
   if (activeScreen) {
     activeScreen.classList.add('active');
   }
-}
 
-function switchSubTab(subTab) {
-  document.getElementById('subtab-btn-today').classList.toggle('active', subTab === 'today');
-  document.getElementById('subtab-btn-history').classList.toggle('active', subTab === 'history');
-
-  document.getElementById('today-main-view').style.display = subTab === 'today' ? 'block' : 'none';
-  document.getElementById('today-history-view').style.display = subTab === 'history' ? 'block' : 'none';
   triggerHaptic('light');
 }
 
-function renderAll() {
-  renderTodaySummary();
-  renderNutrition();
-  renderHabits();
-  renderPersonal();
+// MINE TAB LOGIC
+function switchMineCategory(catName, btnEl) {
+  document.querySelectorAll('.category-pill-btn').forEach(btn => btn.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderMineCards(catName);
+  triggerHaptic('light');
 }
 
-function getLoggedCalories() {
-  let total = 0;
-  Object.values(appState.meals).forEach(mealArray => {
-    mealArray.forEach(item => { total += Number(item.calories || 0); });
-  });
-  return total;
-}
+function renderMineCards(selectedCategory = 'markets') {
+  const grid = document.getElementById('mine-cards-grid');
+  if (!grid) return;
 
-function getLoggedMacros() {
-  let p = 0, f = 0, c = 0, fib = 0;
-  Object.values(appState.meals).forEach(mealArray => {
-    mealArray.forEach(item => {
-      p += Number(item.p || 0);
-      f += Number(item.f || 0);
-      c += Number(item.c || 0);
-      fib += Number(item.fib || 0);
-    });
-  });
-  return { p, f, c, fib };
-}
+  const filtered = gameState.cards.filter(c => c.category === selectedCategory);
 
-// 1. TODAY SUMMARY
-function renderTodaySummary() {
-  const calGoal = appState.userProfile.caloriesGoal || 2661;
-  const waterGoal = appState.userProfile.waterGoal || 2.9;
-
-  const loggedCal = getLoggedCalories();
-
-  const kbjuPercent = Math.min(100, Math.round((loggedCal / calGoal) * 100));
-  const waterPercent = Math.min(100, Math.round((appState.waterCurrent / waterGoal) * 100));
-
-  const totalHabits = appState.habits.length;
-  const completedHabits = appState.habits.filter(h => h.completed).length;
-  const habitsPercent = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
-
-  const workoutPercent = appState.workouts.length > 0 ? 100 : 0;
-
-  const overall = Math.round((habitsPercent + kbjuPercent + workoutPercent + waterPercent) / 4);
-
-  document.getElementById('val-tasks-percent').textContent = `${habitsPercent}%`;
-  document.getElementById('val-kbju-percent').textContent = `${kbjuPercent}%`;
-  document.getElementById('val-workouts-percent').textContent = `${workoutPercent}%`;
-  document.getElementById('val-water-percent').textContent = `${waterPercent}%`;
-  document.getElementById('overall-percentage').textContent = `${overall}%`;
-
-  const ringBar = document.getElementById('overall-ring-bar');
-  if (ringBar) {
-    ringBar.style.strokeDashoffset = 264 - (264 * overall) / 100;
-  }
-
-  // Home Notes Subtitle
-  const notesCountBadge = document.getElementById('home-notes-count-badge');
-  const notesSubtitle = document.getElementById('home-notes-subtitle');
-
-  if (notesCountBadge) notesCountBadge.textContent = appState.notes.length;
-  if (notesSubtitle) {
-    notesSubtitle.textContent = appState.notes.length > 0 ? `Записей: ${appState.notes.length}` : 'Пока пусто';
-  }
-
-  const sleepBadge = document.getElementById('home-sleep-time-badge');
-  const sleepSub = document.getElementById('home-sleep-status-sub');
-  if (sleepBadge && appState.sleepData) {
-    sleepBadge.textContent = appState.sleepData.bedtime || '23:00';
-    if (sleepSub) {
-      sleepSub.textContent = `Качество: ${appState.sleepData.quality || 8}/10`;
-    }
-  }
-}
-
-// 2. NUTRITION SCREEN
-function renderNutrition() {
-  const calGoal = appState.userProfile.caloriesGoal || 2661;
-  const waterGoal = appState.userProfile.waterGoal || 2.9;
-  const loggedCal = getLoggedCalories();
-
-  const leftCal = Math.max(0, calGoal - loggedCal);
-  document.getElementById('calories-left-text').textContent = `Осталось ${leftCal} ккал`;
-  document.getElementById('calories-logged-val').textContent = loggedCal;
-  document.getElementById('calories-goal-val').textContent = `из ${calGoal}`;
-
-  const calBar = document.getElementById('calorie-ring-bar');
-  if (calBar) {
-    const pct = Math.min(100, (loggedCal / calGoal) * 100);
-    calBar.style.strokeDashoffset = 251.2 - (251.2 * pct) / 100;
-  }
-
-  const macros = getLoggedMacros();
-  const updateMacro = (type, val, targetVal) => {
-    const pct = Math.min(100, Math.round((val / targetVal) * 100));
-    document.getElementById(`macro-${type}-percent`).textContent = `${pct}%`;
-    document.getElementById(`macro-${type}-bar`).style.width = `${pct}%`;
-  };
-
-  updateMacro('p', macros.p, appState.userProfile.p || 160);
-  updateMacro('f', macros.f, appState.userProfile.f || 75);
-  updateMacro('c', macros.c, appState.userProfile.c || 320);
-  updateMacro('fib', macros.fib, appState.userProfile.fib || 30);
-
-  const waterSummary = document.getElementById('water-summary-text');
-  if (waterSummary) {
-    waterSummary.textContent = `${appState.waterCurrent.toFixed(1)} / ${waterGoal} л • Жидкости всего ${appState.waterCurrent.toFixed(1)} л`;
-  }
-
-  const renderMealSection = (mealName, containerId) => {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const items = appState.meals[mealName] || [];
-
-    if (items.length === 0) {
-      container.innerHTML = `<span class="empty-hint">Нажми + чтобы добавить ${mealName.toLowerCase()}</span>`;
-    } else {
-      container.innerHTML = items.map((item, idx) => `
-        <div class="food-item-row">
-          <div>
-            <div class="food-name">${item.name}</div>
-            <div class="food-meta">${item.calories} ккал • Б:${item.p}г Ж:${item.f}г У:${item.c}г</div>
-          </div>
-          <button class="btn-text-ghost" onclick="removeFoodItem('${mealName}', ${idx})">✕</button>
+  grid.innerHTML = filtered.map(card => `
+    <div class="mine-card" onclick="buyMineCard('${card.id}')">
+      <div class="mine-card-top">
+        <span class="mine-card-icon">${card.icon}</span>
+        <div>
+          <div class="mine-card-title">${card.title}</div>
+          <div class="mine-card-profit">Прибыль в час</div>
+          <div class="mine-card-profit-val">+${formatNum(card.profit)} 🪙</div>
         </div>
-      `).join('');
-    }
-  };
-
-  renderMealSection('Завтрак', 'meal-items-breakfast');
-  renderMealSection('Обед', 'meal-items-lunch');
-  renderMealSection('Ужин', 'meal-items-dinner');
-  renderMealSection('Перекус', 'meal-items-snack');
-}
-
-function selectNutritionDate(dateLabel, el) {
-  document.querySelectorAll('.date-strip-item').forEach(item => item.classList.remove('active'));
-  el.classList.add('active');
-  triggerHaptic('light');
-}
-
-function toggleWaterAccordion() {
-  const body = document.getElementById('water-accordion-body');
-  const arrow = document.getElementById('water-accordion-arrow');
-  if (body) {
-    const isOpen = body.style.display === 'block';
-    body.style.display = isOpen ? 'none' : 'block';
-    if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
-  }
-}
-
-function addWater(amount) {
-  appState.waterCurrent += amount;
-  triggerHaptic('medium');
-  saveState();
-}
-
-function addDrinkCustom(name, amount) {
-  appState.waterCurrent += amount;
-  appState.drinksLog.unshift({ name, amount, date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
-  triggerHaptic('medium');
-  saveState();
-}
-
-function resetNutritionToday() {
-  appState.meals = { 'Завтрак': [], 'Обед': [], 'Ужин': [], 'Перекус': [] };
-  appState.waterCurrent = 0.0;
-  triggerHaptic('success');
-  saveState();
-}
-
-// 3. HABITS (PATH)
-function renderHabits() {
-  const container = document.getElementById('habits-list-container');
-  if (!container) return;
-
-  if (appState.habits.length === 0) {
-    container.innerHTML = `<div class="empty-box">Нет ритуалов. Нажмите "+ Ритуал".</div>`;
-    return;
-  }
-
-  container.innerHTML = appState.habits.map(habit => `
-    <div class="habit-card-item ${habit.completed ? 'completed' : ''}" onclick="toggleHabit(${habit.id})">
-      <div class="habit-left">
-        <span class="habit-icon-emoji">${habit.icon || '✨'}</span>
-        <div class="habit-checkbox">${habit.completed ? '✓' : ''}</div>
-        <div class="habit-title">${habit.title}</div>
       </div>
-      <div class="habit-streak-badge">⚡ ${habit.streak}дн</div>
+      <div class="mine-card-bottom">
+        <span class="mine-card-lvl">Ур. ${card.lvl}</span>
+        <span class="mine-card-price">🪙 ${formatNum(card.cost)}</span>
+      </div>
     </div>
   `).join('');
 }
 
-function toggleHabit(id) {
-  const habit = appState.habits.find(h => h.id === id);
-  if (habit) {
-    habit.completed = !habit.completed;
-    if (habit.completed) habit.streak += 1;
-    else habit.streak = Math.max(1, habit.streak - 1);
+function buyMineCard(cardId) {
+  const card = gameState.cards.find(c => c.id === cardId);
+  if (!card) return;
+
+  if (gameState.balance < card.cost) {
     triggerHaptic('medium');
-    saveState();
+    alert('❌ Недостаточно монет для покупка этой карточки!');
+    return;
+  }
+
+  gameState.balance -= card.cost;
+  gameState.profitPerHour += card.profit;
+  card.lvl += 1;
+  card.cost = Math.round(card.cost * 1.5);
+  card.profit = Math.round(card.profit * 1.3);
+
+  // Check Daily Combo
+  if (!gameState.foundCombo.includes(card.id) && gameState.comboCards.includes(card.id)) {
+    gameState.foundCombo.push(card.id);
+    updateComboDisplay();
+  }
+
+  triggerHaptic('success');
+  saveGameState();
+}
+
+function updateComboDisplay() {
+  gameState.foundCombo.forEach((id, idx) => {
+    const slot = document.getElementById(`combo-slot-${idx + 1}`);
+    if (slot) {
+      slot.classList.add('solved');
+      slot.textContent = '✓';
+    }
+  });
+
+  if (gameState.foundCombo.length >= 3 && !gameState.comboSolved) {
+    gameState.comboSolved = true;
+    gameState.balance += 5000000;
+    alert('🎉 ЕЖЕДНЕВНОЕ КОМБО СТЕРТО! Получено +5,000,000 🪙!');
   }
 }
 
-function openAddHabitModal() {
-  document.getElementById('modal-title').textContent = 'Новый Ритуал Protocol';
+// BOOSTS MODAL
+function openBoostsModal() {
+  document.getElementById('modal-title').textContent = '🚀 Улучшения & Бусты';
   document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="habit-input-title" class="modal-input" placeholder="Название привычки" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveHabitFromModal()">Создать ритуал</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveHabitFromModal() {
-  const title = document.getElementById('habit-input-title').value.trim();
-  if (title) {
-    appState.habits.push({ id: Date.now(), icon: '✨', title, completed: false, streak: 1 });
-    triggerHaptic('success');
-    saveState();
-    closeModal();
-  }
-}
-
-// 4. PERSONAL (WORKOUTS, BOOKS, BODY MEASUREMENTS)
-function switchPersonalSubTab(subTab) {
-  document.getElementById('personal-sub-workout').classList.toggle('active', subTab === 'workout');
-  document.getElementById('personal-sub-books').classList.toggle('active', subTab === 'books');
-  document.getElementById('personal-sub-body').classList.toggle('active', subTab === 'body');
-
-  document.getElementById('personal-section-workout').style.display = subTab === 'workout' ? 'block' : 'none';
-  document.getElementById('personal-section-books').style.display = subTab === 'books' ? 'block' : 'none';
-  document.getElementById('personal-section-body').style.display = subTab === 'body' ? 'block' : 'none';
-  triggerHaptic('light');
-}
-
-function renderPersonal() {
-  // Workouts
-  const wContainer = document.getElementById('workouts-list-container');
-  if (wContainer) {
-    wContainer.innerHTML = appState.workouts.length === 0
-      ? `<div class="empty-box">Нет записей тренировок. Нажмите "+ Тренировка".</div>`
-      : appState.workouts.map(w => `
-        <div class="journal-card">
-          <div class="journal-meta">
-            <span class="journal-tag">🏋️‍♂️ ${w.type}</span>
-            <span class="journal-date">${w.date}</span>
-          </div>
-          <div class="journal-content">${w.details}</div>
-        </div>
-      `).join('');
-  }
-
-  // Books
-  const bContainer = document.getElementById('books-list-container');
-  if (bContainer) {
-    bContainer.innerHTML = appState.books.length === 0
-      ? `<div class="empty-box">Список книг пуст. Нажмите "+ Добавить книгу".</div>`
-      : appState.books.map(b => `
-        <div class="journal-card">
-          <div class="journal-meta">
-            <span class="journal-tag">📚 ${b.title}</span>
-            <span class="journal-date">${b.pages} стр</span>
-          </div>
-          <div class="journal-content">Автор: ${b.author}</div>
-        </div>
-      `).join('');
-  }
-
-  // Body Measurements
-  const bodyContainer = document.getElementById('body-measurements-container');
-  if (bodyContainer) {
-    bodyContainer.innerHTML = `
-      <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 8px;">Текущие замеры тела:</div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-        <div class="macro-item">
-          <div class="macro-label">⚖️ ВЕС</div>
-          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.weight || 75} кг</div>
-        </div>
-        <div class="macro-item">
-          <div class="macro-label">📏 ТАЛИЯ</div>
-          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.waist || 82} см</div>
-        </div>
-        <div class="macro-item">
-          <div class="macro-label">💪 БИЦЕПС</div>
-          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.biceps || 36} см</div>
-        </div>
-        <div class="macro-item">
-          <div class="macro-label">👕 ГРУДЬ</div>
-          <div style="font-size: 16px; font-weight: 800; color: #fff;">${appState.userProfile.chest || 100} см</div>
+    <div class="task-item-card" onclick="useFullEnergy()">
+      <div class="task-left">
+        <span class="task-icon">⚡</span>
+        <div>
+          <div class="task-title">Full Energy (Восстановить бак)</div>
+          <div class="task-reward">Осталось ${gameState.fullEnergyUses}/6 сегодня</div>
         </div>
       </div>
-    `;
-  }
-}
-
-// MODALS (NOTES LIST & IDEAS LIST)
-function openNotesListModal() {
-  document.getElementById('modal-title').textContent = '📝 Мои Заметки';
-  const notesHtml = appState.notes.length === 0
-    ? `<div class="empty-box">Заметок пока нет. Нажмите "Создать" ниже.</div>`
-    : appState.notes.map((n, i) => `
-      <div class="journal-card" style="margin-bottom: 8px;">
-        <div class="journal-meta">
-          <span class="journal-date">${n.date}</span>
-          <button class="btn-text-ghost" onclick="deleteNote(${i})">✕</button>
-        </div>
-        <div class="journal-content">${n.text}</div>
-      </div>
-    `).join('');
-
-  document.getElementById('modal-body').innerHTML = `
-    <div style="max-height: 260px; overflow-y: auto;">${notesHtml}</div>
-    <textarea id="input-new-note-text" class="modal-input" rows="3" placeholder="Новая заметка..."></textarea>
-    <button class="btn-primary-sm" style="margin-top: 8px; width: 100%" onclick="saveNoteFromModal()">+ Создать заметку</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveNoteFromModal() {
-  const text = document.getElementById('input-new-note-text').value.trim();
-  if (text) {
-    appState.notes.unshift({ id: Date.now(), text, date: new Date().toLocaleDateString('ru-RU') });
-    triggerHaptic('success');
-    saveState();
-    openNotesListModal();
-  }
-}
-
-function deleteNote(index) {
-  appState.notes.splice(index, 1);
-  triggerHaptic('light');
-  saveState();
-  openNotesListModal();
-}
-
-function openIdeasListModal() {
-  document.getElementById('modal-title').textContent = '💡 Мои Идеи';
-  const ideasHtml = appState.ideas.length === 0
-    ? `<div class="empty-box">Идей пока нет. Нажмите "Сохранить идею" ниже.</div>`
-    : appState.ideas.map((idea, i) => `
-      <div class="journal-card" style="margin-bottom: 8px;">
-        <div class="journal-meta">
-          <span class="journal-date">${idea.date}</span>
-          <button class="btn-text-ghost" onclick="deleteIdea(${i})">✕</button>
-        </div>
-        <div class="journal-content">${idea.text}</div>
-      </div>
-    `).join('');
-
-  document.getElementById('modal-body').innerHTML = `
-    <div style="max-height: 260px; overflow-y: auto;">${ideasHtml}</div>
-    <textarea id="input-new-idea-text" class="modal-input" rows="3" placeholder="Запишите инсайт или идею..."></textarea>
-    <button class="btn-primary-sm" style="margin-top: 8px; width: 100%" onclick="saveIdeaFromModal()">+ Сохранить идею</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveIdeaFromModal() {
-  const text = document.getElementById('input-new-idea-text').value.trim();
-  if (text) {
-    appState.ideas.unshift({ id: Date.now(), text, date: new Date().toLocaleDateString('ru-RU') });
-    triggerHaptic('success');
-    saveState();
-    openIdeasListModal();
-  }
-}
-
-function deleteIdea(index) {
-  appState.ideas.splice(index, 1);
-  triggerHaptic('light');
-  saveState();
-  openIdeasListModal();
-}
-
-function openSleepModal() {
-  document.getElementById('modal-title').textContent = '🌙 Записать Сон Protocol';
-  document.getElementById('modal-body').innerHTML = `
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <div>
-        <label style="font-size: 11px; color: var(--text-muted);">Отход ко сну</label>
-        <input type="time" id="input-sleep-bed" class="modal-input" value="${appState.sleepData.bedtime || '23:00'}" />
-      </div>
-      <div>
-        <label style="font-size: 11px; color: var(--text-muted);">Время подъема</label>
-        <input type="time" id="input-sleep-wake" class="modal-input" value="${appState.sleepData.waketime || '06:30'}" />
-      </div>
+      <button class="btn-claim-task">Бесплатно</button>
     </div>
-    <div style="margin-top: 10px;">
-      <label style="font-size: 11px; color: var(--text-muted);">Оценка качества (1-10)</label>
-      <input type="number" id="input-sleep-quality" class="modal-input" min="1" max="10" value="${appState.sleepData.quality || 8}" />
+
+    <div class="task-item-card" onclick="upgradeMultitap()">
+      <div class="task-left">
+        <span class="task-icon">👆</span>
+        <div>
+          <div class="task-title">Multitap (Сила тапа)</div>
+          <div class="task-reward">+1 к клику • 🪙 2,000</div>
+        </div>
+      </div>
+      <button class="btn-claim-task">Ур. ${gameState.multitapLvl}</button>
     </div>
-    <button class="btn-primary-sm" style="margin-top: 12px; width: 100%" onclick="saveSleepFromModal()">Сохранить сон</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
 
-function saveSleepFromModal() {
-  const bedtime = document.getElementById('input-sleep-bed').value;
-  const waketime = document.getElementById('input-sleep-wake').value;
-  const quality = Number(document.getElementById('input-sleep-quality').value) || 8;
-
-  appState.sleepData.bedtime = bedtime;
-  appState.sleepData.waketime = waketime;
-  appState.sleepData.quality = quality;
-  triggerHaptic('success');
-  saveState();
-  closeModal();
-}
-
-function openBodyMeasurementModal() {
-  document.getElementById('modal-title').textContent = '🪞 Замер теля и веса';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="number" id="input-b-weight" class="modal-input" placeholder="Вес (кг)" value="${appState.userProfile.weight || 75}" step="0.1" />
-    <input type="number" id="input-b-waist" class="modal-input" placeholder="Талия (см)" value="${appState.userProfile.waist || 82}" />
-    <input type="number" id="input-b-chest" class="modal-input" placeholder="Грудь (см)" value="${appState.userProfile.chest || 100}" />
-    <input type="number" id="input-b-biceps" class="modal-input" placeholder="Бицепс (см)" value="${appState.userProfile.biceps || 36}" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveBodyMeasurementsFromModal()">Сохранить замеры</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveBodyMeasurementsFromModal() {
-  const weight = Number(document.getElementById('input-b-weight').value) || 75;
-  const waist = Number(document.getElementById('input-b-waist').value) || 82;
-  const chest = Number(document.getElementById('input-b-chest').value) || 100;
-  const biceps = Number(document.getElementById('input-b-biceps').value) || 36;
-
-  appState.userProfile.weight = weight;
-  appState.userProfile.waist = waist;
-  appState.userProfile.chest = chest;
-  appState.userProfile.biceps = biceps;
-
-  triggerHaptic('success');
-  saveState();
-  closeModal();
-}
-
-function openAddFoodModal(mealName) {
-  document.getElementById('modal-title').textContent = `Добавить в ${mealName}`;
-  document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="food-input-name" class="modal-input" placeholder="Название блюда (напр., Овсянка)" />
-    <input type="number" id="food-input-cal" class="modal-input" placeholder="Калории (ккал)" />
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-      <input type="number" id="food-input-p" class="modal-input" placeholder="Белки (г)" />
-      <input type="number" id="food-input-f" class="modal-input" placeholder="Жиры (г)" />
-      <input type="number" id="food-input-c" class="modal-input" placeholder="Угл (г)" />
+    <div class="task-item-card" onclick="upgradeEnergyLimit()">
+      <div class="task-left">
+        <span class="task-icon">🔋</span>
+        <div>
+          <div class="task-title">Energy Limit (Емкость)</div>
+          <div class="task-reward">+500 к энергии • 🪙 3,000</div>
+        </div>
+      </div>
+      <button class="btn-claim-task">Ур. ${gameState.energyLimitLvl}</button>
     </div>
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveFoodFromModal('${mealName}')">Добавить</button>
   `;
   document.getElementById('app-modal').classList.add('active');
 }
 
-function saveFoodFromModal(mealName) {
-  const name = document.getElementById('food-input-name').value.trim() || 'Блюдо';
-  const calories = Number(document.getElementById('food-input-cal').value) || 0;
-  const p = Number(document.getElementById('food-input-p').value) || 0;
-  const f = Number(document.getElementById('food-input-f').value) || 0;
-  const c = Number(document.getElementById('food-input-c').value) || 0;
-
-  appState.meals[mealName].push({ name, calories, p, f, c, fib: 0 });
-  triggerHaptic('success');
-  saveState();
-  closeModal();
-}
-
-function removeFoodItem(mealName, index) {
-  appState.meals[mealName].splice(index, 1);
-  triggerHaptic('light');
-  saveState();
-}
-
-function openAddWorkoutModal() {
-  document.getElementById('modal-title').textContent = '🏋️‍♂️ Новая Тренировка';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="workout-type-input" class="modal-input" placeholder="Тип тренировки (напр., Силовая / Кардио)" />
-    <textarea id="workout-details-input" class="modal-input" rows="3" placeholder="Детали (упражнения, подходы, вес)"></textarea>
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveWorkoutFromModal()">Сохранить тренировку</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveWorkoutFromModal() {
-  const type = document.getElementById('workout-type-input').value.trim() || 'Тренировка';
-  const details = document.getElementById('workout-details-input').value.trim() || 'Выполнено';
-  const date = new Date().toLocaleDateString('ru-RU');
-
-  appState.workouts.unshift({ id: Date.now(), type, details, date });
-  triggerHaptic('success');
-  saveState();
-  closeModal();
-}
-
-function openAddBookModal() {
-  document.getElementById('modal-title').textContent = '📚 Добавить Книгу';
-  document.getElementById('modal-body').innerHTML = `
-    <input type="text" id="book-title-input" class="modal-input" placeholder="Название книги" />
-    <input type="text" id="book-author-input" class="modal-input" placeholder="Автор" />
-    <input type="number" id="book-pages-input" class="modal-input" placeholder="Количество страниц" />
-    <button class="btn-primary-sm" style="margin-top: 10px; width: 100%" onclick="saveBookFromModal()">Сохранить книгу</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function saveBookFromModal() {
-  const title = document.getElementById('book-title-input').value.trim();
-  const author = document.getElementById('book-author-input').value.trim() || 'Не указан';
-  const pages = Number(document.getElementById('book-pages-input').value) || 0;
-
-  if (title) {
-    appState.books.unshift({ id: Date.now(), title, author, pages });
-    triggerHaptic('success');
-    saveState();
-    closeModal();
+function useFullEnergy() {
+  if (gameState.fullEnergyUses <= 0) {
+    alert('Лимит бесплатных восстановлений исчерпан!');
+    return;
   }
+
+  gameState.energy = gameState.maxEnergy;
+  gameState.fullEnergyUses -= 1;
+  triggerHaptic('success');
+  saveGameState();
+  closeModal();
+}
+
+function upgradeMultitap() {
+  if (gameState.balance < 2000) { alert('Недостаточно монет!'); return; }
+  gameState.balance -= 2000;
+  gameState.earnPerTap += 1;
+  gameState.multitapLvl += 1;
+  triggerHaptic('success');
+  saveGameState();
+  closeModal();
+}
+
+function upgradeEnergyLimit() {
+  if (gameState.balance < 3000) { alert('Недостаточно монет!'); return; }
+  gameState.balance -= 3000;
+  gameState.maxEnergy += 500;
+  gameState.energy = gameState.maxEnergy;
+  gameState.energyLimitLvl += 1;
+  triggerHaptic('success');
+  saveGameState();
+  closeModal();
+}
+
+// EXCHANGE SELECTOR MODAL
+function openExchangeModal() {
+  document.getElementById('modal-title').textContent = '🏦 Выбор криптобиржи';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button class="option-card-btn" onclick="selectExchange('Binance', '🟡')">🟡 Binance</button>
+      <button class="option-card-btn" onclick="selectExchange('Bybit', '🖤')">🖤 Bybit</button>
+      <button class="option-card-btn" onclick="selectExchange('OKX', '⚪')">⚪ OKX</button>
+      <button class="option-card-btn" onclick="selectExchange('BingX', '💙')">💙 BingX</button>
+    </div>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function selectExchange(name, logo) {
+  gameState.selectedExchange = name;
+  gameState.exchangeLogo = logo;
+  triggerHaptic('success');
+  saveGameState();
+  closeModal();
+}
+
+// MINI-GAME PUZZLE MODAL
+function openPuzzleMiniGameModal() {
+  document.getElementById('modal-title').textContent = '🎮 Головоломка Свечей (Ключ 🗝️)';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="text-align: center; padding: 10px;">
+      <div style="font-size: 48px;">🗝️</div>
+      <div style="font-size: 15px; font-weight: 800; color: #fff; margin-top: 6px;">Секретная игра за Ключ!</div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Передвинь японские свечи трейдинга и выведи ключ наружу за 30 секунд!</p>
+    </div>
+    <button class="btn-connect-wallet" onclick="playMiniGame()">Начать игру 🚀</button>
+  `;
+  document.getElementById('app-modal').classList.add('active');
+}
+
+function playMiniGame() {
+  gameState.keys += 1;
+  triggerHaptic('success');
+  alert('🎉 ПОБЕДА! За 30 секунд вы решили головоломку и получили +1 Золотой Ключ 🗝️!');
+  saveGameState();
+  closeModal();
+}
+
+// EARN TASKS
+function claimTaskReward(taskId, rewardAmount) {
+  if (gameState.tasksDone[taskId]) {
+    alert('Задание уже выполнено!');
+    return;
+  }
+
+  gameState.tasksDone[taskId] = true;
+  gameState.balance += rewardAmount;
+  triggerHaptic('success');
+
+  const btn = document.getElementById(`task-btn-${taskId}`);
+  if (btn) {
+    btn.textContent = '✓ Выполнено';
+    btn.classList.add('done');
+  }
+
+  alert(`🎉 Задание выполнено! Начислено +${rewardAmount.toLocaleString()} 🪙!`);
+  saveGameState();
+}
+
+function copyReferralLink() {
+  navigator.clipboard?.writeText('https://t.me/SusckaJoleg_bot?start=ref_123456');
+  triggerHaptic('success');
+  alert('📋 Реферальная ссылка скопирована в буфер обмена!');
+}
+
+function toggleWalletConnection() {
+  gameState.walletConnected = !gameState.walletConnected;
+  if (gameState.walletConnected) {
+    gameState.walletAddress = 'EQD3...a8F2';
+  } else {
+    gameState.walletAddress = null;
+  }
+  triggerHaptic('success');
+
+  const btn = document.getElementById('btn-wallet-connect');
+  const status = document.getElementById('airdrop-wallet-status');
+
+  if (btn) btn.textContent = gameState.walletConnected ? 'Кошелек привязан: EQD3...a8F2 ✓' : 'Connect TON wallet 💎';
+  if (status) status.textContent = gameState.walletConnected ? 'Привязан EQD3...a8F2 ✓' : 'Не подключен';
+
+  saveGameState();
 }
 
 function closeModal() {
-  const modal = document.getElementById('app-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function closeTodaySummaryModal() {
-  document.getElementById('modal-title').textContent = '🎉 Закрытие дня PROTOCOL';
-  document.getElementById('modal-body').innerHTML = `
-    <div style="text-align: center; padding: 10px;">
-      <div style="font-size: 32px; margin-bottom: 8px;">🔥</div>
-      <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">День официально закрыт!</div>
-      <div style="font-size: 13px; color: var(--text-muted);">Ваш стрик увеличен! Отличная дисциплина и работа над собой.</div>
-    </div>
-    <button class="btn-primary-sm" style="margin-top: 12px; width: 100%" onclick="finishCloseDay()">Подтвердить закрытие дня</button>
-  `;
-  document.getElementById('app-modal').classList.add('active');
-}
-
-function finishCloseDay() {
-  appState.streak += 1;
-  triggerHaptic('success');
-  saveState();
-  closeModal();
-}
-
-function resetAllAppData() {
-  if (confirm('Сбросить все данные Protocol?')) {
-    localStorage.removeItem('PROTOCOL_APP_DATA_V3');
-    appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    saveState();
-    triggerHaptic('success');
-  }
+  document.getElementById('app-modal').classList.remove('active');
 }
